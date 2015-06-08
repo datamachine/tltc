@@ -181,10 +181,10 @@ class TLCombinator:
         self.params = []
 
     def add_parameter(self, name, type):
-        self.paramters.append(TLParameter(name, Type))
+        self.params.append(TLParameter(name, Type))
 
     def add_optional_parameter(self, name, type):
-        self.paramters.append(TLOptionalParameter(name, Type))
+        self.params.append(TLOptionalParameter(name, type))
 
     def __eq__(self, other):
         return self.id == other.id
@@ -212,10 +212,11 @@ class TLSchema:
                 '#(?P<id>{hex-digit}{{8}})'
             ')'.format(**TL),
             # optional parameter names and types
-            '(?P<add_optional_paramer>\{{(?P<opt_param_name>\S+):'
+            '(?P<add_optional_parameter>\{{(?P<opt_param_name>\S+):'
                 '(?:(?P<opt_param_namespace>{lc-ident-ns})\.|)(?P<opt_param_typename>\S+)\}})'.format(**TL),
             # parameter's names and types
-            '(?P<add_param>(?P<param_name>[^\{\s]+):(?P<param_type>[^\}\s]+))',
+            '(?P<add_parameter>\{{(?P<param_name>\S+):'
+                '(?:(?P<param_namespace>{lc-ident-ns})\.|)(?P<param_typename>\S+)\}})'.format(**TL),
             # end of constructor
             '(?P<end_combinator>;)',
 
@@ -238,55 +239,63 @@ class TLSchema:
                 return t
         return None
 
-    def _fsm_start(self, schema_iter):
-        return 'constructor_section', {}
+    def _fsm_constructors_new_combinator(self, groups, namespace, name, id):
+        print(groups['new_combinator'])
 
-    def _fsm_constructor_section(self, schema_iter, **kwargs):
-        groups = next(schema_iter).groupdict()
-        if groups['new_combinator']:
-            return 'new_constructor', {
-                'namespace': groups['namespace'],
-                'name': groups['name'],
-                'id': groups['id'],
-            }
-        elif groups['start_functions']:
-            return 'functions', {}
-
-        return 'error', {}
-
-    def _fsm_new_constructor(self, schema_iter, namespace, name, id):
         constructor = TLConstructor(namespace, name, id)
-
         if constructor in self.combinators:
             raise Exception('Combinator already exists with id: {}'.format(id))
 
         self.combinators.append(constructor)
+        return {'constructor': constructor}
 
-        return 'get_optional_args', {'constructor': constructor}
+    def _fsm_add_optional_parameter(self, groups, constructor):
+        print(groups['add_optional_parameter'])
 
-    def _fsm_get_optional_args(self, schema_iter, constructor):
-        groups = next(schema_iter).groupdict()
-        if groups['add_optional_paramer']:
-            print(groups)
-            if groups['opt_param_type'] not in self.types:
-                pass
+        if groups['add_optional_parameter']:
+            t = self.get_type(groups['opt_param_namespace'], groups['opt_param_typename'], True)
+            constructor.add_optional_parameter(groups['opt_param_name'], t)
+            return 'get_optional_params', {'constructor':constructor}
+        return {'constructor':constructor}
 
-        return 'end', {}
+    def _fsm_add_parameter(self, groups, constructor):
+        print(groups['add_parameter'])
 
-    def _fsm_functions(self, schema_iter):
-        return 'end', {}
+        if groups['add_parameter']:
+            t = self.get_type(groups['param_type_namespace'], groups['param_typename'], True)
+            constructor.add_optional_parameter(groups['param_name'], t)
+            return {'constructor':constructor}
+        return {'constructor':constructor}
+
+    def _fsm_new_function(self, schema_iter):
+        return {}
+
+    def _fsm_end_combinator(self, groups):
+        print('\tend')
+        return {}
 
     def generate_objects(self):
         self.combinators = []
         schema_iter = self.iter_prog.finditer(self.schema)
-        try:
-            kwargs = {}
-            state = 'start' 
-            while state not in ['end', 'error'] :
-                func = getattr(self, '_fsm_{state}'.format(state=state))
-                state, kwargs = func(schema_iter, **kwargs)
-        except StopIteration:
-            pass
+        kwargs = {}
+        section = 'constructors'
+        for i in schema_iter:
+            groups = i.groupdict()
+            if groups['new_combinator']:
+                kwargs = {'namespace': groups['namespace'], 'name': groups['name'], 'id': groups['id']}
+                func = getattr(self, '_fsm_{section}_new_combinator'.format(section=section))
+            elif groups['add_optional_parameter']:
+                func = self._fsm_add_optional_parameter
+            elif groups['add_parameter']:
+                func = self._fsm_add_parameter
+            elif groups['end_combinator']:
+                kwargs = {}
+                func = self._fsm_end_combinator
+            elif groups['start_functions']:
+                kwargs = {}
+                self.section = 'functions'
+            print(groups['add_parameter'])
+            kwargs = func(groups, **kwargs)
 
 
 if __name__ == "__main__":
