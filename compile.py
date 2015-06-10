@@ -266,16 +266,9 @@ class TLSchema:
             if state == 'quit':
                 return _fsm_error(i, kwargs)
 
-    def translate(self, tl_translator):
-        combinators = [tl_translator.Combinator(c, [tl_translator.Parameter(p) for p in c.params]) for c in self.combinators]
-        types = [tl_translator.Type(t) for t in self.types]
-        t = tl_translator(combinators, types)
-        t.translate()
-
 class TLTranslator:
-    def __init__(self, combinators, types):
-        self.combinators = combinators
-        self.types = types
+    def __init__(self, schema):
+        self.schema = schema
 
     class TranslateObject(metaclass=ABCMeta):
         def __init__(self, data):
@@ -301,6 +294,7 @@ class TLTranslator:
         raise NotImplemented
 
 class Python3Translator(TLTranslator):
+
     class Type(TLTranslator.Type):
         def translate(self):
             return self.data.name
@@ -308,16 +302,36 @@ class Python3Translator(TLTranslator):
     class Combinator(TLTranslator.Combinator):
         def translate(self):
             return '\n'.join([
-                'class {}:'.format(self.data.name),
-                '    def __call__({}):'.format(', '.join([])),
-                '        pass'
+                'class {}(TLObject):'.format(self.data.name),
+                '    id = int(\'{:x}\', 16)'.format(self.data.id),
+                '',
+                '    def __init__(self)',
+                '       pass',
+                '',
+                '    def __call__(self):',
+                '        pass',
+                ''
                 ])
 
     class Parameter(TLTranslator.Parameter):
         def translate(self):
             return self.data.name
 
+    def __init__(self, schema):
+        super().__init__(schema)
+        self.combinators = [Python3Translator.Combinator(c, [Python3Translator.Parameter(p) for p in c.params]) for c in schema.combinators]
+        self.types = [Python3Translator.Type(t) for t in schema.types]
+
     def translate(self):
+
+        print(''
+            'from abc import ABCMeta, abstractmethod\n'
+            '\n'
+            'class TLObject(metaclass=ABCMeta):\n'
+            '   @abstractmethod\n'
+            '   def serialize(self):\n'
+            '       raise NotImplemented\n'
+            )
         for c in self.combinators:
             print(c.translate())
 
@@ -332,7 +346,9 @@ if __name__ == "__main__":
 
     tl_schema = TLSchema(schema)
     tl_schema.generate_intermediate_objects()
-    tl_schema.translate(Python3Translator)
+
+    python3_translator = Python3Translator(tl_schema)
+    python3_translator.translate()
     #print(schema)
 
     #print("\n".join(raw_combs))
