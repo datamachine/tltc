@@ -82,24 +82,20 @@ class TLOptionalParameter(TLParameter):
         raise NotImplemented
 
 class TLType:
-    def __init__(self, namespace, name):
+    def __init__(self, namespace, identifier):
         self.namespace = namespace
-        self.name = name
+        self.identifier = identifier
         self.constructors = []
 
     def add_constructor(self, constructor):
         self.constructors.append(constructor)
 
-    def __eq__(self, other):
-        return (type(other) == type(self) 
-            and other.namespace == self.namespace 
-            and other.name == self.name)
-
 class TLCombinator:
     def __init__(self, namespace, identifier, id):
         self.namespace = namespace
         self.identifier = identifier
-        self.id = int(id, 16)
+        self.id = id
+        self.optional_params = []
         self.params = []
         self.result_type = None
 
@@ -107,13 +103,10 @@ class TLCombinator:
         self.params.append(TLParameter(param_name, param_type))
 
     def add_optional_parameter(self, param_name, param_type):
-        self.params.append(TLOptionalParameter(param_name, param_type))
+        self.optional_params.append(TLOptionalParameter(param_name, param_type))
 
-    def set_type(self, result_type):
+    def set_result_type(self, result_type):
         self.result_type = result_type
-
-    def __eq__(self, other):
-        return self.id == other.id
 
 class TLConstructor(TLCombinator):
     pass
@@ -126,7 +119,16 @@ class TLSchema:
         self.schema = schema
         self._construct_iter_expressions()
         self.types = []
-        self.combinators = []
+        self.combinators = {}
+
+    @property
+    def functions(self):
+        return [c for c_id, c in self.combinators.items() if type(c) is TLConstructor]
+
+    @property
+    def constructors(self):
+        return [c for c_id, c in self.combinators.items() if type(c) is TLFunction]
+        
 
     def _construct_iter_expressions(self):
         tokens = [
@@ -197,6 +199,9 @@ class TLSchema:
         if not groups['combinator']:
             return 'error', {'groups': groups}
 
+        if groups['combinator_id'] in self.combinators:
+            raise Exception('Combinator already exists with id: {}'.format(groups['combinator_id']))
+
         combinator = None
         if section == 'constructors':
             combinator = TLConstructor(groups['combinator_namespace'], groups['combinator_identifier'], groups['combinator_id'])
@@ -205,11 +210,7 @@ class TLSchema:
         else:
             return 'error', {'groups', groups}
 
-        if combinator in self.combinators:
-            raise Exception('Combinator already exists with id: {}'.format(groups['combinator_id']))
-
-        #print('{combinator}'.format(**groups))
-        self.combinators.append(combinator)
+        self.combinators[combinator.id] = combinator
         return 'combinator_optional_params', {'combinator': combinator, 'section':section}
 
     def _fsm_combinator_optional_params(self, groups, section, combinator):
@@ -226,7 +227,7 @@ class TLSchema:
             return self._fsm_combinator_result_type(groups, section, combinator)
 
         t = self.get_type(groups['parameter_type_namespace'], groups['parameter_type_identifier'], True)
-        combinator.add_optional_parameter(groups['parameter_identifier'], t)
+        combinator.add_parameter(groups['parameter_identifier'], t)
         #print('\tparam:  {parameter}'.format(**groups))
         return 'combinator_params', {'combinator':combinator, 'section':section}
 
@@ -235,7 +236,7 @@ class TLSchema:
             return 'error', {'groups':groups}
 
         t = self.get_type(groups['combinator_result_type_namespace'], groups['combinator_result_type_identifier'], True)
-        combinator.set_type(t)
+        combinator.set_result_type(t)
 
         #print('\ttype:   {combinator_type}'.format(**groups))
         return 'combinator_end', {'section':section}
@@ -253,7 +254,7 @@ class TLSchema:
         return 'quit', {}
 
     def generate_intermediate_objects(self):
-        self.combinators = []
+        self.combinators = {}
         schema_iter = self.iter_prog.finditer(self.schema)
         kwargs = {'section': 'constructors'}
         state = 'combinators'
@@ -265,9 +266,10 @@ class TLSchema:
                 return _fsm_error(i, kwargs)
 
 class TLTranslator:
-    def __init__(self, schema, combinators, types):
+    def __init__(self, schema, constructors, functions, types):
         self.schema = schema
-        self.combinators = combinators
+        self.constructors = constructors
+        self.functions = functions
         self.types = types
 
     class TranslateObject(metaclass=ABCMeta):
@@ -279,26 +281,41 @@ class TLTranslator:
         def declaration(self):
             raise NotImplemented
 
+        @abstractmethod
+        def definition(self):
+            raise NotImplemented
+
     class Type(TranslateObject):
         def __init__(self, tl_type):
             self.tl_type = tl_type
 
     class Combinator(TranslateObject):
-        def __init__(self, combinator, params, result_type):
+        def __init__(self, combinator, optional_params, params, result_type):
             self.combinator = combinator
+            self.optional_params = optional_params
             self.params = params
             self.result_type = result_type 
 
     class Function(Combinator):
-        pass
+        @property
+        def function(self):
+            return self.combinator
 
+
+    class Constructor(Combinator):
+        @property
+        def constructor(self):
+            return self.combinator
 
     class Parameter(TranslateObject):
         def __init__(self, parameter):
             self.parameter = parameter
 
     class OptionalParameter(Parameter):
-        pass
+        @property
+        def optional_parameter(self):
+            return self.parameter
+        
 
     @abstractmethod
     def translate(self):
@@ -306,15 +323,40 @@ class TLTranslator:
 
     @staticmethod
     def init_translator(translator_type, schema):
-        combinators = []
-        for c in schema.combinators:
-            params = [translator_type.OptionalParameter(p) if type(p) is type(TLOptionalParameter) else translator_type.Parameter(p) for p in c.params]
-            result_type = translator_type.Type(c.result_type)
-            combinator = translator_type.Combinator(c, params, result_type)
-            combinators.append(combinator)
+        # combinators = []
+        # for c_id, c in schema.combinators.items():
+        #     params = [translator_type.OptionalParameter(p) if type(p) is type(TLOptionalParameter) else translator_type.Parameter(p) for p in c.params]
+        #     result_type = translator_type.Type(c.result_type)
+        #     combinator = None
 
-        types = [Python3Translator.Type(t) for t in schema.types]
-        return translator_type(schema, combinators, types)
+        #     if type(c) is type(TLConstructor):
+        #         combinator = translator_type.Constructor(c, params, result_type)
+        #     elif type(c) is type(TLFunction):
+        #         combinator = translator_type.Function(c, params, result_type)
+        #     else:
+        #         raise Exception('invalid combinator type: {}'.format(type(c)))
+        #
+        #    combinators.append(combinator)
+
+        constructors = []
+        for c in schema.constructors:
+            optional_params = [translator_type.OptionalParameter(op) for op in c.optional_params]
+            params = [translator_type.Parameter(p) for p in c.params]
+            result_type = translator_type.Type(c.result_type)
+            constructor = translator_type.Constructor(c, optional_params, params, result_type)
+            constructors.append(constructor)
+
+        functions = []
+        for c in schema.functions:
+            optional_params = [translator_type.OptionalParameter(op) for op in c.optional_params]
+            params = [translator_type.Parameter(p) for p in c.params]
+            result_type = translator_type.Type(c.result_type)
+            function = translator_type.Function(c, optional_params, params, result_type)
+            functions.append(function)
+
+        types = [translator_type.Type(t) for t in schema.types]
+
+        return translator_type(schema, constructors, functions, types)
 
 class Python3Translator(TLTranslator):
     class Type(TLTranslator.Type):
@@ -324,11 +366,21 @@ class Python3Translator(TLTranslator):
         def declaration(self):
             return self.tl_type.name
 
+        def definition(self):
+            return '\n'.join([
+                'class {identifier}(TLObject):',
+                '   pass',
+                ''
+                ]).format(identifier=self.tl_type.identifier)
+
     class OptionalParameter(TLTranslator.OptionalParameter):
         def identifier(self):
             return self.parameter.name
 
         def declaration(self):
+            return self.parameter.name
+
+        def definition(self):
             return self.parameter.name
 
     class Parameter(TLTranslator.Parameter):
@@ -338,11 +390,17 @@ class Python3Translator(TLTranslator):
         def declaration(self):
             return self.parameter.name
 
-    class Combinator(TLTranslator.Combinator):
+        def definition(self):
+            return self.parameter.name
+
+    class Function(TLTranslator.Function):
         def identifier(self):
             return self.combinator.identifier
 
         def declaration(self):
+            return None
+
+        def definition(self):
             return '\n'.join([
                 'class {}(TLObject):'.format(self.identifier()),
                 '    id = int(\'{:x}\', 16)'.format(self.combinator.id),
@@ -355,8 +413,27 @@ class Python3Translator(TLTranslator):
                 ''
                 ])
 
-    def translate(self):
-        pass
+    class Constructor(TLTranslator.Constructor):
+        def identifier(self):
+            return self.combinator.identifier
+
+        def declaration(self):
+            return None
+
+        def definition(self):
+            return '\n'.join([
+                'class {}(TLObject):'.format(self.identifier()),
+                '    id = int(\'{:x}\', 16)'.format(self.combinator.id),
+                '',
+                '    def __init__(self)',
+                '       pass',
+                '',
+                '    def __call__(self):',
+                '        pass',
+                ''
+                ])
+
+    def define_types(self):
         print(''
             'from abc import ABCMeta, abstractmethod\n'
             '\n'
@@ -366,8 +443,11 @@ class Python3Translator(TLTranslator):
             '       raise NotImplemented\n'
             )
 
-        for c in self.combinators:
-            print(c.declaration())
+        for t in self.types:
+            print(t.definition())
+
+    def translate(self):
+        self.define_types()
 
 
 if __name__ == "__main__":
