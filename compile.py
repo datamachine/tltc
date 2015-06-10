@@ -3,6 +3,7 @@
 import sys
 import re
 from abc import ABCMeta, abstractmethod
+from pathlib import Path
 
 # Character classes
 TL = {}
@@ -69,26 +70,19 @@ COMBINATOR_DECL['opt-arg'] = r'\s*{{(?P<parameter>{var-ident}):(?P<type>{type-id
 COMBINATOR_DECL['arg'] = r'\s{var-ident}:{var-ident}'.format(**TL)
 COMBINATOR_DECL['result-type'] = r'\s*=\s*(?P<result_type>.*?)\s*;'
 
-class TLParameter:
-    def __init__(self, name, type):
-        self.name = name
-        self.type = type
-
-class TLOptionalParameter(TLParameter):
-    pass
-
-    @abstractmethod
-    def translate(self):
-        raise NotImplemented
-
 class TLType:
     def __init__(self, namespace, identifier):
         self.namespace = namespace
         self.identifier = identifier
-        self.constructors = []
 
-    def add_constructor(self, constructor):
-        self.constructors.append(constructor)
+class TLParameter:
+    def __init__(self, identifier, type_namespace, type_identifier):
+        self.identifier = identifier
+        self.type_namespace = type_namespace
+        self.type_identifier = type_identifier
+
+class TLOptionalParameter(TLParameter):
+    pass
 
 class TLCombinator:
     def __init__(self, namespace, identifier, id):
@@ -99,11 +93,11 @@ class TLCombinator:
         self.params = []
         self.result_type = None
 
-    def add_parameter(self, param_name, param_type):
-        self.params.append(TLParameter(param_name, param_type))
+    def add_parameter(self, identifier, type_namespace, type_identifier):
+        self.params.append(TLParameter(identifier, type_namespace, type_identifier))
 
-    def add_optional_parameter(self, param_name, param_type):
-        self.optional_params.append(TLOptionalParameter(param_name, param_type))
+    def add_optional_parameter(self, identifier, type_namespace, type_identifier):
+        self.optional_params.append(TLOptionalParameter(identifier, type_namespace, type_identifier))
 
     def set_result_type(self, result_type):
         self.result_type = result_type
@@ -118,17 +112,19 @@ class TLSchema:
     def __init__(self, schema):
         self.schema = schema
         self._construct_iter_expressions()
-        self.types = []
+        self.types = {}
         self.combinators = {}
 
     @property
     def functions(self):
-        return [c for c_id, c in self.combinators.items() if type(c) is TLConstructor]
+        return [c for c_id, c in self.combinators.items() if type(c) is TLFunction]
 
     @property
     def constructors(self):
-        return [c for c_id, c in self.combinators.items() if type(c) is TLFunction]
-        
+        return [c for c_id, c in self.combinators.items() if type(c) is TLConstructor]
+
+    def constructors_with_type(self, namespace, identifer):
+        return [c for c in self.constructors if c.result_type.namespace == namespace and c.result_type.identifier == identifier]
 
     def _construct_iter_expressions(self):
         tokens = [
@@ -141,16 +137,20 @@ class TLSchema:
             # optional parameter names and types
             '(?P<optional_parameter>'
                     '(?P<optional_parameter_identifier>\S+):'
-                    '(?:(?P<optional_parameter_type_namespace>{lc-ident-ns})\.|)'
-                    '(?P<optional_parameter_type_identifier>\S+)'
+                    '(?P<optional_parameter_type>'
+                        '(?:(?P<optional_parameter_type_namespace>{lc-ident-ns})\.|)'
+                        '(?P<optional_parameter_type_identifier>\S+)'
+                    ')'
                 '\}}'
             ')'.format(**TL),
             # parameter's names and types
             '(?P<parameter>'
                 '(?:'
                     '(?P<parameter_identifier>\S+):'
-                    '(?:(?P<parameter_type_namespace>{lc-ident-ns})\.|)'
-                    '(?P<parameter_type_identifier>\S+)'
+                    '(?P<parameter_type>'
+                        '(?:(?P<parameter_type_namespace>{lc-ident-ns})\.|)'
+                        '(?P<parameter_type_identifier>\S+)'
+                    ')'
                 ')'
                 '|(?P<parameter_nat>'
                     '#'
@@ -182,16 +182,6 @@ class TLSchema:
         self.iter_expr = '(?:{})'.format('|'.join(tokens))
         self.iter_prog = re.compile(self.iter_expr)
 
-    def get_type(self, namespace, name, create_if_new=False):
-        t = TLType(namespace, name)
-        try:
-            return next(filter(lambda x: x == t, self.types))
-        except StopIteration:
-            if create_if_new:
-                self.types.append(t)
-                return t
-        return None
-
     def _fsm_combinators(self, groups, section):
         if section == 'constructors' and groups['start_functions']:
             return 'combinators', {'section':'functions'}
@@ -217,25 +207,37 @@ class TLSchema:
         if not groups['optional_parameter']:
             return self._fsm_combinator_params(groups, section, combinator)
 
-        t = self.get_type(groups['optional_parameter_type_namespace'], groups['optional_parameter_type_identifier'], True)
-        combinator.add_optional_parameter(groups['optional_parameter_identifier'], t)
-        #print('\toptpar: {optional_parameter}'.format(**groups))
+
+        t = self.types.get(groups['optional_parameter_type'], None)
+        if not t:
+            t = TLType(groups['optional_parameter_type_namespace'], groups['optional_parameter_type_identifier'])
+            self.types[groups['optional_parameter_type']] = t
+
+        combinator.add_optional_parameter(groups['optional_parameter_identifier'], groups['optional_parameter_type_namespace'], groups['optional_parameter_type_identifier'])
+
         return 'combinator_optional_params', {'combinator':combinator, 'section':section}
 
     def _fsm_combinator_params(self, groups, section, combinator):
         if not groups['parameter']:
             return self._fsm_combinator_result_type(groups, section, combinator)
 
-        t = self.get_type(groups['parameter_type_namespace'], groups['parameter_type_identifier'], True)
-        combinator.add_parameter(groups['parameter_identifier'], t)
-        #print('\tparam:  {parameter}'.format(**groups))
+        t = self.types.get(groups['parameter_type'], None)
+        if not t:
+            t = TLType(groups['parameter_type_namespace'], groups['parameter_type_identifier'])
+            self.types[groups['parameter_type']] = t
+
+        combinator.add_parameter(groups['parameter_identifier'], groups['parameter_type_namespace'], groups['parameter_type_identifier'])
+
         return 'combinator_params', {'combinator':combinator, 'section':section}
 
     def _fsm_combinator_result_type(self, groups, section, combinator):
         if not groups['combinator_result_type']:
             return 'error', {'groups':groups}
 
-        t = self.get_type(groups['combinator_result_type_namespace'], groups['combinator_result_type_identifier'], True)
+        t = self.types.get(groups['combinator_result_type'], None)
+        if not t:
+            t = TLType(groups['combinator_result_type_namespace'], groups['combinator_result_type_identifier'])
+            self.types[groups['combinator_result_type']] = t
         combinator.set_result_type(t)
 
         #print('\ttype:   {combinator_type}'.format(**groups))
@@ -286,15 +288,18 @@ class TLTranslator:
             raise NotImplemented
 
     class Type(TranslateObject):
-        def __init__(self, tl_type):
-            self.tl_type = tl_type
+        def __init__(self, namespace, identifier):
+            self.namespace = namespace
+            self.identifier = identifier
 
     class Combinator(TranslateObject):
-        def __init__(self, combinator, optional_params, params, result_type):
-            self.combinator = combinator
+        def __init__(self, namespace, identifier, id, optional_params, params, result_type):
+            self.identifier = identifier
+            self.namespace = namespace
+            self.id = id
             self.optional_params = optional_params
             self.params = params
-            self.result_type = result_type 
+            self.result_type = result_type
 
     class Function(Combinator):
         @property
@@ -309,7 +314,9 @@ class TLTranslator:
 
     class Parameter(TranslateObject):
         def __init__(self, parameter):
-            self.parameter = parameter
+            self.identifier = parameter.identifier
+            self.type_namespace = parameter.type_namespace
+            self.type_identifier = parameter.type_identifier
 
     class OptionalParameter(Parameter):
         @property
@@ -323,55 +330,39 @@ class TLTranslator:
 
     @staticmethod
     def init_translator(translator_type, schema):
-        # combinators = []
-        # for c_id, c in schema.combinators.items():
-        #     params = [translator_type.OptionalParameter(p) if type(p) is type(TLOptionalParameter) else translator_type.Parameter(p) for p in c.params]
-        #     result_type = translator_type.Type(c.result_type)
-        #     combinator = None
-
-        #     if type(c) is type(TLConstructor):
-        #         combinator = translator_type.Constructor(c, params, result_type)
-        #     elif type(c) is type(TLFunction):
-        #         combinator = translator_type.Function(c, params, result_type)
-        #     else:
-        #         raise Exception('invalid combinator type: {}'.format(type(c)))
-        #
-        #    combinators.append(combinator)
-
+        types = {key:translator_type.Type(t.namespace, t.identifier) for key, t in schema.types.items()}
         constructors = []
         for c in schema.constructors:
             optional_params = [translator_type.OptionalParameter(op) for op in c.optional_params]
             params = [translator_type.Parameter(p) for p in c.params]
-            result_type = translator_type.Type(c.result_type)
-            constructor = translator_type.Constructor(c, optional_params, params, result_type)
+            result_type = types.get('{}.{}'.format(c.result_type.namespace, c.result_type.identifier))
+            constructor = translator_type.Constructor(c.namespace, c.identifier, c.id, optional_params, params, result_type)
             constructors.append(constructor)
 
         functions = []
         for c in schema.functions:
             optional_params = [translator_type.OptionalParameter(op) for op in c.optional_params]
             params = [translator_type.Parameter(p) for p in c.params]
-            result_type = translator_type.Type(c.result_type)
-            function = translator_type.Function(c, optional_params, params, result_type)
+            result_type = types.get('{}.{}'.format(c.result_type.namespace, c.result_type.identifier))
+            function = translator_type.Function(c.namespace, c.identifier, c.id, optional_params, params, result_type)
             functions.append(function)
-
-        types = [translator_type.Type(t) for t in schema.types]
 
         return translator_type(schema, constructors, functions, types)
 
 class Python3Translator(TLTranslator):
     class Type(TLTranslator.Type):
         def identifier(self):
-            return self.tl_type.name
+            return self.identifier
 
         def declaration(self):
-            return self.tl_type.name
+            return self.identifier
 
         def definition(self):
             return '\n'.join([
                 'class {identifier}(TLObject):',
                 '   pass',
                 ''
-                ]).format(identifier=self.tl_type.identifier)
+                ]).format(identifier=self.identifier)
 
     class OptionalParameter(TLTranslator.OptionalParameter):
         def identifier(self):
@@ -393,26 +384,6 @@ class Python3Translator(TLTranslator):
         def definition(self):
             return self.parameter.name
 
-    class Function(TLTranslator.Function):
-        def identifier(self):
-            return self.combinator.identifier
-
-        def declaration(self):
-            return None
-
-        def definition(self):
-            return '\n'.join([
-                'class {}(TLObject):'.format(self.identifier()),
-                '    id = int(\'{:x}\', 16)'.format(self.combinator.id),
-                '',
-                '    def __init__(self)',
-                '       pass',
-                '',
-                '    def __call__(self):',
-                '        pass',
-                ''
-                ])
-
     class Constructor(TLTranslator.Constructor):
         def identifier(self):
             return self.combinator.identifier
@@ -433,17 +404,43 @@ class Python3Translator(TLTranslator):
                 ''
                 ])
 
-    def define_types(self):
-        print(''
-            'from abc import ABCMeta, abstractmethod\n'
-            '\n'
-            'class TLObject(metaclass=ABCMeta):\n'
-            '   @abstractmethod\n'
-            '   def serialize(self):\n'
-            '       raise NotImplemented\n'
-            )
+    class Function(TLTranslator.Function):
+        def identifier(self):
+            return self.combinator.identifier
 
-        for t in self.types:
+        def declaration(self):
+            return None
+
+        def definition(self):
+            return '\n'.join([
+                'class {}(TLObject):'.format(self.identifier()),
+                '    id = int(\'{:x}\', 16)'.format(self.combinator.id),
+                '',
+                '    def __init__(self)',
+                '       pass',
+                '',
+                '    def __call__(self):',
+                '        pass',
+                ''
+                ])
+
+    def define_types(self):
+        print('\n'.join([
+            'from abc import ABCMeta, abstractmethod',
+            ''
+            'class TLObject(metaclass=ABCMeta):',
+            '   @abstractmethod',
+            '   def serialize(self):',
+            '       raise NotImplemented',
+            '',
+            '   @abstractmethod',
+            '   def deserialize(self):',
+            '       raise NotImplemented',
+            ''
+            ])
+        )
+
+        for typename, t in self.types.items():
             print(t.definition())
 
     def translate(self):
