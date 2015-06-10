@@ -272,11 +272,11 @@ class TLTranslator:
 
     class TranslateObject(metaclass=ABCMeta):
         @abstractmethod
-        def translate(self):
+        def identifier(self):
             raise NotImplemented
 
         @abstractmethod
-        def identifier(self):
+        def declaration(self):
             raise NotImplemented
 
     class Type(TranslateObject):
@@ -318,28 +318,31 @@ class TLTranslator:
 
 class Python3Translator(TLTranslator):
     class Type(TLTranslator.Type):
-        def translate(self):
+        def identifier(self):
             return self.tl_type.name
 
-        def identifier(self):
+        def declaration(self):
             return self.tl_type.name
 
     class OptionalParameter(TLTranslator.OptionalParameter):
-        def translate(self):
+        def identifier(self):
             return self.parameter.name
 
-        def identifier(self):
+        def declaration(self):
             return self.parameter.name
 
     class Parameter(TLTranslator.Parameter):
-        def translate(self):
-            return self.parameter.name
-
         def identifier(self):
             return self.parameter.name
 
+        def declaration(self):
+            return self.parameter.name
+
     class Combinator(TLTranslator.Combinator):
-        def translate(self):
+        def identifier(self):
+            return self.combinator.identifier
+
+        def declaration(self):
             return '\n'.join([
                 'class {}(TLObject):'.format(self.identifier()),
                 '    id = int(\'{:x}\', 16)'.format(self.combinator.id),
@@ -351,9 +354,6 @@ class Python3Translator(TLTranslator):
                 '        pass',
                 ''
                 ])
-
-        def identifier(self):
-            return self.combinator.identifier
 
     def translate(self):
         pass
@@ -367,7 +367,7 @@ class Python3Translator(TLTranslator):
             )
 
         for c in self.combinators:
-            print(c.translate())
+            print(c.declaration())
 
 
 if __name__ == "__main__":
