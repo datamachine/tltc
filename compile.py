@@ -2,6 +2,7 @@
 
 import sys
 import re
+from abc import ABCMeta, abstractmethod
 
 # Character classes
 TL = {}
@@ -75,6 +76,10 @@ class TLParameter:
 
 class TLOptionalParameter(TLParameter):
     pass
+
+    @abstractmethod
+    def translate(self):
+        raise NotImplemented
 
 class TLType:
     def __init__(self, namespace, name):
@@ -205,7 +210,7 @@ class TLSchema:
         if combinator in self.combinators:
             raise Exception('Combinator already exists with id: {}'.format(groups['id']))
 
-        print('{combinator}'.format(**groups))
+        #print('{combinator}'.format(**groups))
         self.combinators.append(combinator)
         return 'combinator_optional_params', {'combinator': combinator, 'section':section}
 
@@ -215,7 +220,7 @@ class TLSchema:
 
         t = self.get_type(groups['opt_param_namespace'], groups['opt_param_typename'], True)
         combinator.add_optional_parameter(groups['opt_param_name'], t)
-        print('\toptpar: {optional_parameter}'.format(**groups))
+        #print('\toptpar: {optional_parameter}'.format(**groups))
         return 'combinator_optional_params', {'combinator':combinator, 'section':section}
 
     def _fsm_combinator_params(self, groups, section, combinator):
@@ -224,7 +229,7 @@ class TLSchema:
 
         t = self.get_type(groups['param_type_namespace'], groups['param_typename'], True)
         combinator.add_optional_parameter(groups['param_name'], t)
-        print('\tparam:  {parameter}'.format(**groups))
+        #print('\tparam:  {parameter}'.format(**groups))
         return 'combinator_params', {'combinator':combinator, 'section':section}
 
     def _fsm_combinator_type(self, groups, section, combinator):
@@ -234,14 +239,14 @@ class TLSchema:
         t = self.get_type(groups['combinator_type_namespace'], groups['combinator_typename'], True)
         combinator.set_type(t)
 
-        print('\ttype:   {combinator_type}'.format(**groups))
+        #print('\ttype:   {combinator_type}'.format(**groups))
         return 'combinator_end', {'section':section}
 
     def _fsm_combinator_end(self, groups, section):
         if not groups['combinator_end']:
             return 'error', {}
 
-        print()
+        #print()
         return 'combinators', {'section':section}
 
     def _fsm_error(self, matches, **kwargs):
@@ -261,6 +266,62 @@ class TLSchema:
             if state == 'quit':
                 return _fsm_error(i, kwargs)
 
+    def translate(self, tl_translator):
+        combinators = [tl_translator.Combinator(c, [tl_translator.Parameter(p) for p in c.params]) for c in self.combinators]
+        types = [tl_translator.Type(t) for t in self.types]
+        t = tl_translator(combinators, types)
+        t.translate()
+
+class TLTranslator:
+    def __init__(self, combinators, types):
+        self.combinators = combinators
+        self.types = types
+
+    class TranslateObject(metaclass=ABCMeta):
+        def __init__(self, data):
+            self.data = data
+
+        @abstractmethod
+        def translate(self):
+            raise NotImplemented
+
+    class Type(TranslateObject):
+        pass
+
+    class Combinator(TranslateObject):
+        def __init__(self, data, params):
+            super().__init__(data)
+            self.params = params
+
+    class Parameter(TranslateObject):
+        pass
+
+    @abstractmethod
+    def translate(self):
+        raise NotImplemented
+
+class Python3Translator(TLTranslator):
+    class Type(TLTranslator.Type):
+        def translate(self):
+            return self.data.name
+
+    class Combinator(TLTranslator.Combinator):
+        def translate(self):
+            return '\n'.join([
+                'class {}:'.format(self.data.name),
+                '    def __call__({}):'.format(', '.join([])),
+                '        pass'
+                ])
+
+    class Parameter(TLTranslator.Parameter):
+        def translate(self):
+            return self.data.name
+
+    def translate(self):
+        for c in self.combinators:
+            print(c.translate())
+
+
 if __name__ == "__main__":
     schema = None
     with open(sys.argv[1]) as fp:
@@ -271,7 +332,7 @@ if __name__ == "__main__":
 
     tl_schema = TLSchema(schema)
     tl_schema.generate_intermediate_objects()
+    tl_schema.translate(Python3Translator)
     #print(schema)
-
 
     #print("\n".join(raw_combs))
