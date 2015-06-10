@@ -154,12 +154,13 @@ class TLSchema:
                     '(?P<multiplicity_param>\S+)'
                   '\s+\]'
             ')'.format(**TL),
+
             # get the combinator's Type
             '=\s*'
             '(?P<combinator_type>'
                 '(?:(?P<combinator_type_namespace>{lc-ident-ns})\.|)'
                 '(?P<combinator_typename>[^;]+)'
-            ')',
+            ')'.format(**TL),
 
             # end of constructor
             '(?P<combinator_end>;)',
