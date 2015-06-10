@@ -126,7 +126,7 @@ class TLSchema:
     def _construct_iter_expressions(self):
         tokens = [
             # constructor's full identifier
-            '(?P<new_combinator>'
+            '(?P<combinator>'
                 '(?P<fullname>'
                     '(?:(?P<namespace>{lc-ident-ns})\.|)'
                     '(?P<name>\S+)'
@@ -186,18 +186,11 @@ class TLSchema:
                 return t
         return None
 
-    def _fsm_invalid_syntax(self, groups, schema_iter, **kwargs):
-        print("ERROR: Invalid Syntax: {}".format(groups['invalid_syntax']))
-        return kwargs
-
-    def _fsm_combinators(self, matches, section):
-        groups = matches.groupdict()
-        print('_fsm_combinators')
-
+    def _fsm_combinators(self, groups, section):
         if section == 'constructors' and groups['start_functions']:
             return 'combinators', {'section':'functions'}
 
-        if not groups['new_combinator']:
+        if not groups['combinator']:
             return 'error', {'groups': groups}
 
         combinator = None
@@ -211,45 +204,43 @@ class TLSchema:
         if combinator in self.combinators:
             raise Exception('Combinator already exists with id: {}'.format(groups['id']))
 
+        print('{combinator}'.format(**groups))
         self.combinators.append(combinator)
         return 'combinator_optional_params', {'combinator': combinator, 'section':section}
 
-    def _fsm_combinator_optional_params(self, matches, section, combinator):
-        print('_fsm_combinator_optional_params')
-        groups = matches.groupdict()
+    def _fsm_combinator_optional_params(self, groups, section, combinator):
         if not groups['optional_parameter']:
-            return self._fsm_combinator_params(matches, section, combinator)
+            return self._fsm_combinator_params(groups, section, combinator)
 
         t = self.get_type(groups['opt_param_namespace'], groups['opt_param_typename'], True)
         combinator.add_optional_parameter(groups['opt_param_name'], t)
+        print('\t{optional_parameter}'.format(**groups))
         return 'combinator_optional_params', {'combinator':combinator, 'section':section}
 
-    def _fsm_combinator_params(self, matches, section, combinator):
-        print('_fsm_combinator_params')
-        groups = matches.groupdict()
+    def _fsm_combinator_params(self, groups, section, combinator):
         if not groups['parameter']:
-            return self._fsm_combinator_type(matches, section, combinator)
+            return self._fsm_combinator_type(groups, section, combinator)
 
         t = self.get_type(groups['param_type_namespace'], groups['param_typename'], True)
         combinator.add_optional_parameter(groups['param_name'], t)
+        print('\t{parameter}'.format(**groups))
         return 'combinator_params', {'combinator':combinator, 'section':section}
 
-    def _fsm_combinator_type(self, matches, section, combinator):
-        print('_fsm_combinator_type')
-        groups = matches.groupdict()
+    def _fsm_combinator_type(self, groups, section, combinator):
         if not groups['combinator_type']:
             return 'error', {'groups':groups}
 
         t = self.get_type(groups['combinator_type_namespace'], groups['combinator_typename'], True)
         combinator.set_type(t)
 
+        print('\t{combinator_type}'.format(**groups))
         return 'combinator_end', {'section':section}
 
-    def _fsm_combinator_end(self, matches, section):
-        print('_fsm_combinator_end')
-        if not matches.groupdict()['combinator_end']:
+    def _fsm_combinator_end(self, groups, section):
+        if not groups['combinator_end']:
             return 'error', {}
 
+        print()
         return 'combinators', {'section':section}
 
     def _fsm_error(self, matches, **kwargs):
@@ -264,10 +255,10 @@ class TLSchema:
         state = 'combinators'
         for i in schema_iter:
             func = getattr(self, '_fsm_{}'.format(state))
-            state, kwargs = func(i, **kwargs)
+            state, kwargs = func(i.groupdict(), **kwargs)
 
             if state == 'quit':
-                break
+                return _fsm_error(i, kwargs)
 
 if __name__ == "__main__":
     schema = None
