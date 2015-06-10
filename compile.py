@@ -275,6 +275,10 @@ class TLTranslator:
         def translate(self):
             raise NotImplemented
 
+        @abstractmethod
+        def indentifer(self):
+            raise NotImplemented
+
     class Type(TranslateObject):
         def __init__(self, tl_type):
             self.tl_type = tl_type
@@ -315,15 +319,24 @@ class TLTranslator:
 class Python3Translator(TLTranslator):
     class Type(TLTranslator.Type):
         def translate(self):
-            return self.data.name
+            return self.tl_type.name
+
+        def identifer(self):
+            return self.tl_type.name
 
     class OptionalParameter(TLTranslator.OptionalParameter):
         def translate(self):
-            return self.data.name
+            return self.parameter.name
+
+        def identifer(self):
+            return self.parameter.name
 
     class Parameter(TLTranslator.Parameter):
         def translate(self):
-            return self.data.name
+            return self.parameter.name
+
+        def identifer(self):
+            return self.parameter.name
 
     class Combinator(TLTranslator.Combinator):
         def translate(self):
@@ -338,6 +351,9 @@ class Python3Translator(TLTranslator):
                 '        pass',
                 ''
                 ])
+
+            def identifer(self):
+                return self.combinator.identifer
 
     def translate(self):
         pass
