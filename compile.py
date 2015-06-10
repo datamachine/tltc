@@ -68,89 +68,6 @@ COMBINATOR_DECL['opt-arg'] = r'\s*{{(?P<parameter>{var-ident}):(?P<type>{type-id
 COMBINATOR_DECL['arg'] = r'\s{var-ident}:{var-ident}'.format(**TL)
 COMBINATOR_DECL['result-type'] = r'\s*=\s*(?P<result_type>.*?)\s*;'
 
-def strip_comments(schema):
-    return re.sub('^\s*//.*$', '\n', schema, flags=re.MULTILINE)
-
-def remove_excess_whitespace(schema):
-    return re.sub('\s+', ' ', schema)
-
-def get_constructors(schema):
-    while schema:
-        constructor = {'opt_args': [], 'arg': []}
-
-        print()
-        # get the namespace, identifier, and name (i.e. crc32)
-        match = re.match(COMBINATOR_DECL['full-combinator-id'], schema)
-        for key, item in match.groupdict().items():
-            constructor[key] = item
-        schema = schema[match.span()[1]:]
-
-        print(constructor)
-
-        # vector is built in type, ignore this for now
-        if constructor['identifier'] == 'vector':
-            match = re.match('.*?;', schema)
-            print(match)
-            schema = schema[match.span()[1]:]
-            continue
-
-        # get the optional arguments
-        match = re.match(COMBINATOR_DECL['opt-arg'], schema)
-        while match:
-            opt_arg = match.groupdict()
-            constructor['opt_args'] += [opt_arg]
-            schema = schema[match.span()[1]:]
-            match = re.match(COMBINATOR_DECL['opt-arg'], schema)
-            print(constructor)
-
-        # get the args
-        match = re.match(COMBINATOR_DECL['arg'], schema)
-        if match:
-            arg = match.groupdict()
-            args += [{arg['identifier']:arg['type']}]
-            schema = schema[match.span()[1]:]
-
-        print(constructor)
-        # get result type
-        match = re.match(COMBINATOR_DECL['result-type'], schema)
-        constructor['result_type'] = match.groupdict()['result_type']
-        schema = schema[match.span()[1]:]
-
-        print(constructor)
-    #print("\n".join([str(m.groupdict()) for m in matches]))
-    return ''
-
-def get_raw_combinators(schema):
-    schema = strip_comments(schema)
-    schema = remove_excess_whitespace(schema)
-    return re.findall(r'(.*?;|---.*?---)', schema)
- 
-def get_combinator_iter(combinator):
-    expr = '(?:{}|{}|{})'.format(
-        # get the combinator's name and id(crc32) number
-        '(?P<name>\S*)#(?P<id>[0-9a-f])',        
-        # get the parameters' names and types
-        '(?P<param>[^\s\{]*):(?P<param_type>[^\s\}]*)',
-        # get the combinator's result type
-        '=\s*(?P<type>.*?);'
-    )
-
-    #'(?:(?P<name>\S*)#(?P<id>[0-9a-f])|(?P<param>[^\s\{]*):(?P<arg>[^\s\}]*)|=\s*(?P<result_type>.*?);)'
-
-    return re.finditer(expr, combinator)
-
-def get_all_types(combinators):
-    types = set()
-    for c in combinators:
-        #m = re.match('^.*?=\s*(.*)\s*;', c)
-        for i in get_combinator_iter(c):
-            groups = i.groupdict()
-            if groups['type']:
-                types.add(groups['type'])
-            if (groups['param_type']):
-                types.add(groups['param_type'])
-    return types
-
 class TLParameter:
     def __init__(self, name, type):
         self.name = name
@@ -179,12 +96,16 @@ class TLCombinator:
         self.name = name
         self.id = int(id, 16)
         self.params = []
+        self.type = None
 
     def add_parameter(self, name, type):
         self.params.append(TLParameter(name, Type))
 
     def add_optional_parameter(self, name, type):
         self.params.append(TLOptionalParameter(name, type))
+
+    def set_type(self, type):
+        self.type = type
 
     def __eq__(self, other):
         return self.id == other.id
@@ -207,24 +128,50 @@ class TLSchema:
             # constructor's full identifier
             '(?P<new_combinator>'
                 '(?P<fullname>'
-                    '(?:(?P<namespace>{lc-ident-ns})\.|)(?P<name>\S+)'
+                    '(?:(?P<namespace>{lc-ident-ns})\.|)'
+                    '(?P<name>\S+)'
                 ')'
-                '#(?P<id>{hex-digit}{{8}})'
+                '#(?P<id>{hex-digit}+)'
             ')'.format(**TL),
             # optional parameter names and types
-            '(?P<add_optional_parameter>\{{(?P<opt_param_name>\S+):'
-                '(?:(?P<opt_param_namespace>{lc-ident-ns})\.|)(?P<opt_param_typename>\S+)\}})'.format(**TL),
+            '(?P<optional_parameter>'
+                    '(?P<opt_param_name>\S+):'
+                    '(?:(?P<opt_param_namespace>{lc-ident-ns})\.|)'
+                    '(?P<opt_param_typename>\S+)'
+                '\}}'
+            ')'.format(**TL),
             # parameter's names and types
-            '(?P<add_parameter>\{{(?P<param_name>\S+):'
-                '(?:(?P<param_namespace>{lc-ident-ns})\.|)(?P<param_typename>\S+)\}})'.format(**TL),
+            '(?P<parameter>'
+                '(?:'
+                    '(?P<param_name>\S+):'
+                    '(?:(?P<param_type_namespace>{lc-ident-ns})\.|)'
+                    '(?P<param_typename>\S+)'
+                ')'
+                '|(?P<multiplicity>'
+                    '#'
+                    '\s+\[\s+'
+                    '(?P<multiplicity_param>\S+)'
+                    '\s+\]'
+                ')'
+            ')'.format(**TL),
+            # get the combinator's Type
+            '=\s*'
+            '(?P<combinator_type>'
+                '(?:(?P<combinator_type_namespace>{lc-ident-ns})\.|)'
+                '(?P<combinator_typename>[^;]+)'
+            ')',
+
             # end of constructor
-            '(?P<end_combinator>;)',
+            '(?P<combinator_end>;)',
 
             # start the function section
             '(?P<start_functions>{triple-minus}functions{triple-minus})'.format(**TOKENS),
 
             # start the types section
-            '(?P<start_types>{triple-minus}types{triple-minus})'.format(**TOKENS)
+            '(?P<start_types>{triple-minus}types{triple-minus})'.format(**TOKENS),
+
+            # catch anything else
+            '(?P<invalid_syntax>\S+)'
         ]
         self.iter_expr = '(?:{})'.format('|'.join(tokens))
         self.iter_prog = re.compile(self.iter_expr)
@@ -239,64 +186,88 @@ class TLSchema:
                 return t
         return None
 
-    def _fsm_constructors_new_combinator(self, groups, namespace, name, id):
-        print(groups['new_combinator'])
+    def _fsm_invalid_syntax(self, groups, schema_iter, **kwargs):
+        print("ERROR: Invalid Syntax: {}".format(groups['invalid_syntax']))
+        return kwargs
 
-        constructor = TLConstructor(namespace, name, id)
-        if constructor in self.combinators:
-            raise Exception('Combinator already exists with id: {}'.format(id))
+    def _fsm_combinators(self, matches, section):
+        groups = matches.groupdict()
+        print('_fsm_combinators')
 
-        self.combinators.append(constructor)
-        return {'constructor': constructor}
+        if section == 'constructors' and groups['start_functions']:
+            return 'combinators', {'section':'functions'}
 
-    def _fsm_add_optional_parameter(self, groups, constructor):
-        print(groups['add_optional_parameter'])
+        if not groups['new_combinator']:
+            return 'error', {'groups': groups}
 
-        if groups['add_optional_parameter']:
-            t = self.get_type(groups['opt_param_namespace'], groups['opt_param_typename'], True)
-            constructor.add_optional_parameter(groups['opt_param_name'], t)
-            return 'get_optional_params', {'constructor':constructor}
-        return {'constructor':constructor}
+        combinator = None
+        if section == 'constructors':
+            combinator = TLConstructor(groups['namespace'], groups['name'], groups['id'])
+        elif section == 'functions':
+            combinator = TLFunction(groups['namespace'], groups['name'], groups['id'])
+        else:
+            return 'error', {'groups', groups}
 
-    def _fsm_add_parameter(self, groups, constructor):
-        print(groups['add_parameter'])
+        if combinator in self.combinators:
+            raise Exception('Combinator already exists with id: {}'.format(groups['id']))
 
-        if groups['add_parameter']:
-            t = self.get_type(groups['param_type_namespace'], groups['param_typename'], True)
-            constructor.add_optional_parameter(groups['param_name'], t)
-            return {'constructor':constructor}
-        return {'constructor':constructor}
+        self.combinators.append(combinator)
+        return 'combinator_optional_params', {'combinator': combinator, 'section':section}
 
-    def _fsm_new_function(self, schema_iter):
-        return {}
+    def _fsm_combinator_optional_params(self, matches, section, combinator):
+        print('_fsm_combinator_optional_params')
+        groups = matches.groupdict()
+        if not groups['optional_parameter']:
+            return self._fsm_combinator_params(matches, section, combinator)
 
-    def _fsm_end_combinator(self, groups):
-        print('\tend')
-        return {}
+        t = self.get_type(groups['opt_param_namespace'], groups['opt_param_typename'], True)
+        combinator.add_optional_parameter(groups['opt_param_name'], t)
+        return 'combinator_optional_params', {'combinator':combinator, 'section':section}
+
+    def _fsm_combinator_params(self, matches, section, combinator):
+        print('_fsm_combinator_params')
+        groups = matches.groupdict()
+        if not groups['parameter']:
+            return self._fsm_combinator_type(matches, section, combinator)
+
+        t = self.get_type(groups['param_type_namespace'], groups['param_typename'], True)
+        combinator.add_optional_parameter(groups['param_name'], t)
+        return 'combinator_params', {'combinator':combinator, 'section':section}
+
+    def _fsm_combinator_type(self, matches, section, combinator):
+        print('_fsm_combinator_type')
+        groups = matches.groupdict()
+        if not groups['combinator_type']:
+            return 'error', {'groups':groups}
+
+        t = self.get_type(groups['combinator_type_namespace'], groups['combinator_typename'], True)
+        combinator.set_type(t)
+
+        return 'combinator_end', {'section':section}
+
+    def _fsm_combinator_end(self, matches, section):
+        print('_fsm_combinator_end')
+        if not matches.groupdict()['combinator_end']:
+            return 'error', {}
+
+        return 'combinators', {'section':section}
+
+    def _fsm_error(self, matches, **kwargs):
+        print('_fsm_error')
+        print('ERROR:\t{}:\t{}'.format(matches, kwargs))
+        return 'quit', {}
 
     def generate_objects(self):
         self.combinators = []
         schema_iter = self.iter_prog.finditer(self.schema)
-        kwargs = {}
-        section = 'constructors'
+        kwargs = {'section': 'constructors'}
+        state = 'combinators'
         for i in schema_iter:
-            groups = i.groupdict()
-            if groups['new_combinator']:
-                kwargs = {'namespace': groups['namespace'], 'name': groups['name'], 'id': groups['id']}
-                func = getattr(self, '_fsm_{section}_new_combinator'.format(section=section))
-            elif groups['add_optional_parameter']:
-                func = self._fsm_add_optional_parameter
-            elif groups['add_parameter']:
-                func = self._fsm_add_parameter
-            elif groups['end_combinator']:
-                kwargs = {}
-                func = self._fsm_end_combinator
-            elif groups['start_functions']:
-                kwargs = {}
-                self.section = 'functions'
-            print(groups['add_parameter'])
-            kwargs = func(groups, **kwargs)
+            func = getattr(self, '_fsm_{}'.format(state))
+            state, kwargs = func(i, **kwargs)
 
+            if state == 'quit':
+                break
 
 if __name__ == "__main__":
     schema = None
