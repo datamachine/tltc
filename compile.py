@@ -150,11 +150,9 @@ class TLSchema:
                 '|(?P<param_nat>'
                     '#'
                 ')'
-                '|(:?'
-                    '\s+\[\s+'
+                '|\[\s+'
                     '(?P<multiplicity_param>\S+)'
-                    '\s+\]'
-                ')'
+                  '\s+\]'
             ')'.format(**TL),
             # get the combinator's Type
             '=\s*'
