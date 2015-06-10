@@ -147,8 +147,10 @@ class TLSchema:
                     '(?:(?P<param_type_namespace>{lc-ident-ns})\.|)'
                     '(?P<param_typename>\S+)'
                 ')'
-                '|(?P<multiplicity>'
+                '|(?P<param_nat>'
                     '#'
+                ')'
+                '|(:?'
                     '\s+\[\s+'
                     '(?P<multiplicity_param>\S+)'
                     '\s+\]'
@@ -248,7 +250,7 @@ class TLSchema:
         print('ERROR:\t{}:\t{}'.format(matches, kwargs))
         return 'quit', {}
 
-    def generate_objects(self):
+    def generate_intermediate_objects(self):
         self.combinators = []
         schema_iter = self.iter_prog.finditer(self.schema)
         kwargs = {'section': 'constructors'}
@@ -269,7 +271,7 @@ if __name__ == "__main__":
     #types = get_all_types(combinators)
 
     tl_schema = TLSchema(schema)
-    tl_schema.generate_objects()
+    tl_schema.generate_intermediate_objects()
     #print(schema)
 
 
