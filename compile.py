@@ -214,7 +214,7 @@ class TLSchema:
 
         t = self.get_type(groups['opt_param_namespace'], groups['opt_param_typename'], True)
         combinator.add_optional_parameter(groups['opt_param_name'], t)
-        print('\t{optional_parameter}'.format(**groups))
+        print('\toptpar: {optional_parameter}'.format(**groups))
         return 'combinator_optional_params', {'combinator':combinator, 'section':section}
 
     def _fsm_combinator_params(self, groups, section, combinator):
@@ -223,7 +223,7 @@ class TLSchema:
 
         t = self.get_type(groups['param_type_namespace'], groups['param_typename'], True)
         combinator.add_optional_parameter(groups['param_name'], t)
-        print('\t{parameter}'.format(**groups))
+        print('\tparam:  {parameter}'.format(**groups))
         return 'combinator_params', {'combinator':combinator, 'section':section}
 
     def _fsm_combinator_type(self, groups, section, combinator):
@@ -233,7 +233,7 @@ class TLSchema:
         t = self.get_type(groups['combinator_type_namespace'], groups['combinator_typename'], True)
         combinator.set_type(t)
 
-        print('\t{combinator_type}'.format(**groups))
+        print('\ttype:   {combinator_type}'.format(**groups))
         return 'combinator_end', {'section':section}
 
     def _fsm_combinator_end(self, groups, section):
