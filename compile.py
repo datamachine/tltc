@@ -355,9 +355,17 @@ class Python3Translator(TLTranslator):
             return self.identifier
 
         def definition(self):
+            member_vars = []
+            for c in self.constructors:
+                member_vars += [p.identifier for p in c.params if p.identifier and p.identifier not in member_vars]
+            init_params = ', '.join(['self'] + member_vars)
+            init_member_vars = '\n'.join(['        self.{0} = {0}'.format(m) for m in member_vars])
+            if not init_member_vars:
+                init_member_vars = '        pass'
             return '\n'.join([
-                'class {identifier}(TLObject):',
-                '   pass',
+                'class {identifier}(TLType):',
+                '    def __init__({})'.format(init_params),
+                '{}'.format(init_member_vars),
                 ''
                 ]).format(identifier=self.identifier)
 
@@ -391,60 +399,71 @@ class Python3Translator(TLTranslator):
         def definition(self):
             param_identifier = [p.identifier for p in self.params if p.identifier]
             param_inits = '\n'.join('        {0} = {1}({0})'.format(p.identifier, p.type.identifier) for p in self.params)
-            serialize_return = ' + '.join(['struct.pack(!\'i\', id)'] + ['{}.serilize()'.format(p) for p in param_identifier])
+            serialize_return = ' + '.join(['struct.pack(!\'i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
             return '\n'.join([
-                'class {}(TLCombinator):'.format(self.identifier),
+                'class {}(TLConstructor):'.format(self.identifier),
                 '    id = 0x{}'.format(self.id),
                 '',
-                '    @property',
-                '    def id(self):',
-                '        return id',
-                '',
-                '    def __call__({}):'.format(', '.join(['self'] + param_identifier)),
+                '    @staticmethod',
+                '    def new({}):'.format(', '.join(['self'] + param_identifier)),
                 '{}'.format(param_inits),
                 '',
                 '        return {}({})'.format(self.result_type.identifier, ', '.join(param_identifier)),
                 '',
-                '    def serialize(self):',
+                '    @staticmethod',
+                '    def serialize(obj):',
                 '        return {}'.format(serialize_return),
+                '',
+                '    @staticmethod',
+                '    def deserialize(io_bytes):',
+                '        return {}.new({})'.format(self.identifier, '...'),
                 '',
                 ])
 
     class Function(TLTranslator.Function):
         def identifier(self):
-            return self.combinator.identifier
+            return self.identifier
 
         def declaration(self):
             return None
 
         def definition(self):
+            param_identifier = [p.identifier for p in self.params if p.identifier]
+            param_inits = '\n'.join('        {0} = {1}({0})'.format(p.identifier, p.type.identifier) for p in self.params)
+            serialize_return = ' + '.join(['struct.pack(!\'i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
             return '\n'.join([
-                'class {}(TLObject):'.format(self.identifier()),
-                '    id = 0x{}'.format(self.combinator.id),
+                'class {}(TLFunction):'.format(self.identifier),
+                '    id = 0x{}'.format(self.id),
                 '',
-                '    @property',
-                '    def id(self):',
-                '        return id',
+                '    @staticmethod',
+                '    def new({}):'.format(', '.join(['self'] + param_identifier)),
+                '{}'.format(param_inits),
                 '',
-                '    def __init__(self)',
-                '        pass',
+                '        return {}({})'.format(self.result_type.identifier, ', '.join(param_identifier)),
                 '',
-                '    def __call__(self):',
-                '         pass',
-                ''
+                '    @staticmethod',
+                '    def serialize(obj):',
+                '        return {}'.format(serialize_return),
+                '',
+                '    @staticmethod',
+                '    def deserialize(io_bytes):',
+                '        return {}.new({})'.format(self.identifier, '...'),
+                '',
                 ])
 
     def define_types(self):
         print('\n'.join([
             'from abc import ABCMeta, abstractmethod',
-            ''
+            '',
             'class TLObject(metaclass=ABCMeta):',
+            '    @staticmethod',
             '    @abstractmethod',
-            '    def serialize(self):',
+            '    def serialize(obj):',
             '        raise NotImplemented',
             '',
+            '    @staticmethod',
             '    @abstractmethod',
-            '    def deserialize(self, bytes_io):',
+            '    def deserialize(self, obj, bytes_io):',
             '        raise NotImplemented',
             ''
             ])
@@ -458,15 +477,6 @@ class Python3Translator(TLTranslator):
             '',
             '    def __init__(self):',
             '        combinators[self.id] = self',
-            '',
-            '    @abstractmethod',
-            '    def __call__(self):',
-            '        raise NotImplemented',
-            '',
-            '    @abstractmethod',
-            '    @property',
-            '    def id(self):',
-            '        raise NotImplemented',
             ''
             ])
         )
@@ -488,13 +498,18 @@ class Python3Translator(TLTranslator):
         for typename, t in self.types.items():
             print(t.definition())
 
-    def define_combinators(self):
+    def define_constructors(self):
         for c in self.constructors:
             print(c.definition())
 
+    def define_functions(self):
+        for f in self.functions:
+            print(f.definition())
+
     def translate(self):
         self.define_types()
-        self.define_combinators()
+        self.define_constructors()
+        self.define_functions()
 
 
 if __name__ == "__main__":
