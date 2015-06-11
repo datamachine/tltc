@@ -186,16 +186,19 @@ class TLSchema:
         if not groups['combinator']:
             return 'error', {'groups': groups}
 
-        if groups['combinator_id'] in self.combinators:
-            raise Exception('Combinator already exists with id: {}'.format(groups['combinator_id']))
+        combinator_namespace = groups['combinator_namespace']
+        combinator_identifier = groups['combinator_identifier']
+        combinator_id = int(groups['combinator_id'], 16)
 
-        combinator = None
-        if section == 'constructors':
-            combinator = TLConstructor(groups['combinator_namespace'], groups['combinator_identifier'], groups['combinator_id'])
-        elif section == 'functions':
-            combinator = TLFunction(groups['combinator_namespace'], groups['combinator_identifier'], groups['combinator_id'])
-        else:
+        if combinator_id in self.combinators:
+            raise Exception('Combinator already exists with id: {}'.format(combinator_id))
+
+        if section not in ['functions', 'constructors']:
             return 'error', {'groups', groups}
+
+        combinator_cls = TLConstructor if section == 'constructors' else TLFunction
+
+        combinator = combinator_cls(combinator_namespace, combinator_identifier, combinator_id)
 
         self.combinators[combinator.id] = combinator
         return 'combinator_optional_params', {'combinator': combinator, 'section':section}
@@ -397,7 +400,7 @@ class {identifier}(TLType):
 
     combinator_template="""
 class {identifier}({base_class}):
-    id = 0x{id}
+    id = {hex_id}
 
     @staticmethod
     def new({params}):
@@ -427,7 +430,7 @@ class {identifier}({base_class}):
             return Python3Translator.combinator_template.format(
                 identifier=self.identifier,
                 base_class='TLConstructor',
-                id=self.id,
+                hex_id=self.id,
                 params=params,
                 result_type_identifer=self.result_type.identifier,
                 type_init_args=type_init_args,
@@ -448,7 +451,7 @@ class {identifier}({base_class}):
             return Python3Translator.combinator_template.format(
                 identifier=self.identifier,
                 base_class='TLFunction',
-                id=self.id,
+                hex_id=self.id,
                 params=params,
                 result_type_identifer=self.result_type.identifier,
                 type_init_args=type_init_args,
@@ -458,27 +461,37 @@ class {identifier}({base_class}):
     builtin_templates += [
 """
 from abc import ABCMeta, abstractmethod
+from collections import abc
+from numbers import Integral
 
-class TLObject(metaclass=ABCMeta):
-    @staticmethod
+class TLType(metaclass=ABCMeta):
     @abstractmethod
     def serialize(obj):
         raise NotImplemented
 
-    @staticmethod,
-    @abstractmethod,
+    @abstractmethod
     def deserialize(self, obj, bytes_io):
         raise NotImplemented
 """]
 
     builtin_templates += [
 """
-class TLCombinator(TLObject):
+class TLCombinator(metaclass=ABCMeta):
     combinators = {}
 
     @staticmethod
     def add_combinator(combinator_type):
         TLCombinator.combinators[combinator.id] = combinator_type
+
+    @staticmethod
+    @abstractmethod
+    def serialize(obj):
+        raise NotImplemented
+
+    @staticmethod
+    @abstractmethod
+    def deserialize(self, obj, bytes_io):
+        raise NotImplemented
 """
 ]
 
@@ -496,10 +509,74 @@ class TLFunction(TLCombinator):
 """
 ]
 
-    def define_types(self):
+    builtin_templates += [
+"""
+class Int(numbers.Integral, TLType):
+    def __init__(self, _int):
+        self._int = int(_int)
+
+    def serialize(obj):
+        pass
+
+    def deserialize(io_string):
+        pass
+
+    """
+    numbers.Integral abstract methods
+    """
+    def default_integral_override(name):
+        def integral_override(self, *args, **kwargs):
+            return Int(getattr(self._int, name)(*args, **kwargs))
+        return integral_override
+
+    def __int__(self):
+        return self._int
+
+for abstract_method in Int.__abstractmethods__:
+    setattr(Int, abstract_method, Int.default_integral_override(abstract_method))
+Int.__abstractmethods__ = frozenset()
+"""
+]
+
+    builtin_templates += [
+"""
+class Long(TLType):
+    def __init__(self, _long):
+        self._long = int(_long)
+
+    def __getattr__(self, name):
+        return getattr(self._long, name)
+
+    def serialize(obj):
+        pass
+
+    def deserialize(io_string):
+        pass
+"""
+]
+
+    builtin_templates += [
+"""
+class Bool(TLType):
+    def __init__(self, _bool):
+        self._bool = bool(_bool)
+
+    def __getattr__(self, name):
+        return getattr(self._bool, name)
+
+    def serialize(obj):
+        pass
+
+    def deserialize(io_string):
+        pass
+"""
+]
+
+    def define_builtins(self):
         for t in Python3Translator.builtin_templates:
             print(t)
 
+    def define_types(self):
         for typename, t in self.types.items():
             print(t.definition())
 
@@ -512,9 +589,10 @@ class TLFunction(TLCombinator):
             print(f.definition())
 
     def translate(self):
-        self.define_types()
-        self.define_constructors()
-        self.define_functions()
+        self.define_builtins()
+        #self.define_types()
+        #self.define_constructors()
+        #self.define_functions()
 
 
 if __name__ == "__main__":
