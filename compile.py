@@ -392,6 +392,8 @@ class Python3Translator(TLTranslator):
             return None
 
         def definition(self):
+            for p in self.params:
+                print(p)
             return '\n'.join([
                 'class {}(TLCombinator):'.format(self.identifier),
                 '    id = int(\'{}\', 16)'.format(self.id),
