@@ -15,7 +15,6 @@ TL['underscore'] = '_'
 TL['letter'] = '{lc-letter}{uc-letter}'.format(**TL)
 TL['ident-char'] = '{letter}{digit}{underscore}'.format(**TL)
 TL = { name: '[{}]'.format(c) for name, c in TL.items() }
-#print("\n".join([name + " ::= " + item for name, item in TL.items()]))
 
 # Simple identifiers and keywords:
 TL['lc-ident'] = r'{lc-letter}{ident-char}*'.format(**TL)
@@ -28,9 +27,6 @@ TL['lc-ident-full'] = r'(:?{lc-ident-ns})#({hex-digit}{{8}})'.format(**TL)
 TL['var-ident'] = r'(:?{lc-ident}|{uc-ident})'.format(**TL)
 TL['boxed-type-ident'] = r'{uc-ident-ns}'.format(**TL)
 TL['type-ident'] = r'(:?{boxed-type-ident}|{lc-ident-ns}|#)'.format(**TL)
-
-#print(TL['lc-ident-ns'])
-#print("\n".join([name + " ::= " + item for name, item in TL.items()]))
 
 # Tokens
 TOKENS = {}
@@ -74,6 +70,7 @@ class TLType:
     def __init__(self, namespace, identifier):
         self.namespace = namespace
         self.identifier = identifier
+        self.ident_full = '{}.{}'.format(namespace, identifier) if namespace else identifier
 
 class TLParameter:
     def __init__(self, identifier, type_namespace, type_identifier):
@@ -240,14 +237,12 @@ class TLSchema:
             self.types[groups['combinator_result_type']] = t
         combinator.set_result_type(t)
 
-        #print('\ttype:   {combinator_type}'.format(**groups))
         return 'combinator_end', {'section':section}
 
     def _fsm_combinator_end(self, groups, section):
         if not groups['combinator_end']:
             return 'error', {}
 
-        #print()
         return 'combinators', {'section':section}
 
     def _fsm_error(self, matches, **kwargs):
@@ -291,12 +286,13 @@ class TLTranslator:
         def __init__(self, namespace, identifier):
             self.namespace = namespace
             self.identifier = identifier
+            self.ident_full = '{}.{}'.format(namespace, identifier) if namespace else identifier
+            self.constructors = []
 
     class Parameter(TranslateObject):
-        def __init__(self, identifier, type_namespace, type_identifier):
+        def __init__(self, identifier, type):
             self.identifier = identifier
-            self.type_namespace = type_namespace
-            self.type_identifier = type_identifier
+            self.type = type
 
     class OptionalParameter(Parameter):
         @property
@@ -333,17 +329,18 @@ class TLTranslator:
         types = {key:translator_type.Type(t.namespace, t.identifier) for key, t in schema.types.items()}
         constructors = []
         for c in schema.constructors:
-            optional_params = [translator_type.OptionalParameter(op.identifier, op.type_namespace, op.type_identifier) for op in c.optional_params]
-            params = [translator_type.Parameter(p.identifier, p.type_namespace, p.type_namespace) for p in c.params]
-            result_type = types.get('{}.{}'.format(c.result_type.namespace, c.result_type.identifier))
+            optional_params = [translator_type.OptionalParameter(op.identifier, translator_type.Type(op.type_namespace, op.type_identifier)) for op in c.optional_params]
+            params = [translator_type.Parameter(p.identifier, translator_type.Type(p.type_namespace, p.type_identifier)) for p in c.params]
+            result_type = types[c.result_type.ident_full]
             constructor = translator_type.Constructor(c.namespace, c.identifier, c.id, optional_params, params, result_type)
             constructors.append(constructor)
+            result_type.constructors.append(constructor)
 
         functions = []
         for c in schema.functions:
-            optional_params = [translator_type.OptionalParameter(op.identifier, op.type_namespace, op.type_identifier) for op in c.optional_params]
-            params = [translator_type.Parameter(p.identifier, p.type_namespace, p.type_namespace) for p in c.params]
-            result_type = types.get('{}.{}'.format(c.result_type.namespace, c.result_type.identifier))
+            optional_params = [translator_type.OptionalParameter(op.identifier, translator_type.Type(op.type_namespace, op.type_identifier)) for op in c.optional_params]
+            params = [translator_type.Parameter(p.identifier, translator_type.Type(p.type_namespace, p.type_identifier)) for p in c.params]
+            result_type = types[c.result_type.ident_full]
             function = translator_type.Function(c.namespace, c.identifier, c.id, optional_params, params, result_type)
             functions.append(function)
 
@@ -392,26 +389,25 @@ class Python3Translator(TLTranslator):
             return None
 
         def definition(self):
-            call_params = ['self']
-            call_params += [str(p.identifier) for p in self.params]
-            call_params = ', '.join(call_params)
-            param_order = ', '.join([str(p.type_identifier) for p in self.params])
+            param_identifier = [p.identifier for p in self.params if p.identifier]
+            param_inits = '\n'.join('        {0} = {1}({0})'.format(p.identifier, p.type.identifier) for p in self.params)
+            serialize_return = ' + '.join(['struct.pack(!\'i\', id)'] + ['{}.serilize()'.format(p) for p in param_identifier])
             return '\n'.join([
                 'class {}(TLCombinator):'.format(self.identifier),
-                '    id = int(\'{}\', 16)'.format(self.id),
-                '',
-                '    param_order = [{}]'.format(param_order),
+                '    id = 0x{}'.format(self.id),
                 '',
                 '    @property',
                 '    def id(self):',
                 '        return id',
                 '',
-                '    def __init__(self)',
-                '       pass',
+                '    def __call__({}):'.format(', '.join(['self'] + param_identifier)),
+                '{}'.format(param_inits),
                 '',
-                '    def __call__({}):'.format(call_params),
-                '        pass',
-                ''
+                '        return {}({})'.format(self.result_type.identifier, ', '.join(param_identifier)),
+                '',
+                '    def serialize(self):',
+                '        return {}'.format(serialize_return),
+                '',
                 ])
 
     class Function(TLTranslator.Function):
@@ -424,7 +420,7 @@ class Python3Translator(TLTranslator):
         def definition(self):
             return '\n'.join([
                 'class {}(TLObject):'.format(self.identifier()),
-                '    id = int(\'{:x}\', 16)'.format(self.combinator.id),
+                '    id = 0x{}'.format(self.combinator.id),
                 '',
                 '    @property',
                 '    def id(self):',
@@ -448,17 +444,21 @@ class Python3Translator(TLTranslator):
             '        raise NotImplemented',
             '',
             '    @abstractmethod',
-            '    def deserialize(self):',
+            '    def deserialize(self, bytes_io):',
             '        raise NotImplemented',
             ''
             ])
         )
 
-        for typename, t in self.types.items():
-            print(t.definition())
 
         print('\n'.join([
             'class TLCombinator(TLObject):',
+            '',
+            '    combinators = {}',
+            '',
+            '    def __init__(self):',
+            '        combinators[self.id] = self',
+            '',
             '    @abstractmethod',
             '    def __call__(self):',
             '        raise NotImplemented',
@@ -466,7 +466,7 @@ class Python3Translator(TLTranslator):
             '    @abstractmethod',
             '    @property',
             '    def id(self):',
-            '        raise NotImplemented'
+            '        raise NotImplemented',
             ''
             ])
         )
@@ -485,11 +485,16 @@ class Python3Translator(TLTranslator):
             ])
         )
 
+        for typename, t in self.types.items():
+            print(t.definition())
+
+    def define_combinators(self):
         for c in self.constructors:
             print(c.definition())
 
     def translate(self):
         self.define_types()
+        self.define_combinators()
 
 
 if __name__ == "__main__":
