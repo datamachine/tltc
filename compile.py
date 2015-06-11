@@ -452,11 +452,9 @@ if __name__ == "__main__":
     with open(sys.argv[1]) as fp:
         schema = fp.read()
 
-    #combinators = get_raw_combinators(schema)
-    #types = get_all_types(combinators)
-
     tl_schema = TLSchema(schema)
     tl_schema.generate_intermediate_objects()
 
     python3_translator = TLTranslator.init_translator(Python3Translator, tl_schema)
     python3_translator.translate()
+    
