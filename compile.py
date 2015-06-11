@@ -290,8 +290,8 @@ class TLTranslator:
             self.constructors = []
 
     class Parameter(TranslateObject):
-        def __init__(self, identifier, type):
-            self.identifier = identifier
+        def __init__(self, _identifier, type):
+            self._identifier = _identifier
             self.type = type
 
     class OptionalParameter(Parameter):
@@ -363,7 +363,9 @@ class {identifier}(TLType):
         def definition(self):
             member_vars = []
             for c in self.constructors:
-                member_vars += [p.identifier for p in c.params if p.identifier and p.identifier not in member_vars]
+                member_vars += [p.identifier() for p in c.params if p.identifier() and p.identifier() not in member_vars]
+            if not member_vars:
+                member_vars = ['combinator_id']
             param_list = ', '.join(['self'] + member_vars)
             param_inits = '\n'.join([''] + ['        self.{0} = {0}'.format(m) for m in member_vars])
             if not param_inits:
@@ -375,23 +377,23 @@ class {identifier}(TLType):
 
     class OptionalParameter(TLTranslator.OptionalParameter):
         def identifier(self):
-            return self.parameter.name
+            return self._identifier
 
         def declaration(self):
-            return self.parameter.name
+            return self._identifier
 
         def definition(self):
-            return self.parameter.name
+            return self._identifier
 
     class Parameter(TLTranslator.Parameter):
         def identifier(self):
-            return self.parameter.name
+            return self._identifier
 
         def declaration(self):
-            return self.parameter.name
+            return self._identifier
 
         def definition(self):
-            return self.parameter.name
+            return self._identifier
 
     combinator_template="""
 class {identifier}({base_class}):
@@ -399,7 +401,7 @@ class {identifier}({base_class}):
 
     @staticmethod
     def new({params}):
-        return {result_type_identifer}(params)
+        return {result_type_identifer}({type_init_args})
 
     @staticmethod
     def serialize(obj):
@@ -418,16 +420,18 @@ class {identifier}({base_class}):
             return None
 
         def definition(self):
-            param_identifier = [p.identifier for p in self.params if p.identifier]
-            param_inits = '\n'.join('        {0} = {1}({0})'.format(p.identifier, p.type.identifier) for p in self.params)
-            serialize = ' + '.join(['struct.pack(\'!i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
+            param_identifiers = [p.identifier() for p in self.params if p.identifier()]
+            params = ', '.join(param_identifiers)
+            type_init_args = ', '.join(['{}.id'.format(self.identifier)] + param_identifiers)
+            serialize = ' + '.join(['struct.pack(\'!i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifiers])
             return Python3Translator.combinator_template.format(
                 identifier=self.identifier,
                 base_class='TLConstructor',
                 id=self.id,
-                params=param_inits,
-                serialize=serialize,
-                result_type_identifer=self.result_type.identifier)
+                params=params,
+                result_type_identifer=self.result_type.identifier,
+                type_init_args=type_init_args,
+                serialize=serialize)
 
     class Function(TLTranslator.Function):
         def identifier(self):
@@ -437,16 +441,18 @@ class {identifier}({base_class}):
             return None
 
         def definition(self):
-            param_identifier = [p.identifier for p in self.params if p.identifier]
-            param_inits = '\n'.join('        {0} = {1}({0})'.format(p.identifier, p.type.identifier) for p in self.params)
-            serialize = ' + '.join(['struct.pack(\'!i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
+            param_identifiers = [p.identifier() for p in self.params if p.identifier()]
+            params = ','.join(param_identifiers)
+            type_init_args = ', '.join(['{}.id'.format(self.identifier)] + param_identifiers)
+            serialize = ' + '.join(['struct.pack(\'!i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifiers])
             return Python3Translator.combinator_template.format(
                 identifier=self.identifier,
                 base_class='TLFunction',
                 id=self.id,
-                params=param_inits,
-                serialize=serialize,
-                result_type_identifer=self.result_type.identifier)
+                params=params,
+                result_type_identifer=self.result_type.identifier,
+                type_init_args=type_init_args,
+                serialize=serialize)
 
     builtin_templates = []
     builtin_templates += [
