@@ -399,7 +399,7 @@ class Python3Translator(TLTranslator):
         def definition(self):
             param_identifier = [p.identifier for p in self.params if p.identifier]
             param_inits = '\n'.join('        {0} = {1}({0})'.format(p.identifier, p.type.identifier) for p in self.params)
-            serialize_return = ' + '.join(['struct.pack(!\'i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
+            serialize_return = ' + '.join(['struct.pack(\'!i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
             return '\n'.join([
                 'class {}(TLConstructor):'.format(self.identifier),
                 '    id = 0x{}'.format(self.id),
@@ -430,7 +430,7 @@ class Python3Translator(TLTranslator):
         def definition(self):
             param_identifier = [p.identifier for p in self.params if p.identifier]
             param_inits = '\n'.join('        {0} = {1}({0})'.format(p.identifier, p.type.identifier) for p in self.params)
-            serialize_return = ' + '.join(['struct.pack(!\'i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
+            serialize_return = ' + '.join(['struct.pack(\'!i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
             return '\n'.join([
                 'class {}(TLFunction):'.format(self.identifier),
                 '    id = 0x{}'.format(self.id),
