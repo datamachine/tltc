@@ -392,8 +392,9 @@ class Python3Translator(TLTranslator):
             return None
 
         def definition(self):
-            for p in self.params:
-                print(p)
+            call_params = ['self']
+            call_params += [str(p.identifier) for p in self.params]
+            call_params = ', '.join(call_params)
             return '\n'.join([
                 'class {}(TLCombinator):'.format(self.identifier),
                 '    id = int(\'{}\', 16)'.format(self.id),
@@ -405,7 +406,7 @@ class Python3Translator(TLTranslator):
                 '    def __init__(self)',
                 '       pass',
                 '',
-                '    def __call__(self):',
+                '    def __call__({}):'.format(call_params),
                 '        pass',
                 ''
                 ])
