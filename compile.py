@@ -453,28 +453,28 @@ class Python3Translator(TLTranslator):
 
         print('\n'.join([
             'class TLCombinator(TLObject):',
-            '   @abstractmethod',
-            '   def __call__(self):',
-            '       raise NotImplemented',
+            '    @abstractmethod',
+            '    def __call__(self):',
+            '        raise NotImplemented',
             '',
-            '   @abstractmethod',
-            '   @property',
-            '   def id(self):',
-            '       raise NotImplemented'
+            '    @abstractmethod',
+            '    @property',
+            '    def id(self):',
+            '        raise NotImplemented'
             ''
             ])
         )
 
         print('\n'.join([
             'class TLConstructor(TLCombinator):',
-            'pass',
+            '    pass',
             ''
             ])
         )
 
         print('\n'.join([
             'class TLFunction(TLCombinator):',
-            '   pass',
+            '    pass',
             ''
             ])
         )
