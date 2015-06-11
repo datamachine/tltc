@@ -397,28 +397,31 @@ class Python3Translator(TLTranslator):
             return None
 
         def definition(self):
+            template="""
+class {identifier}(TLConstructor):
+    id = 0x{id}
+
+    @staticmethod
+    def new({params}):
+        return {result_type_identifer}(params)
+
+    @staticmethod
+    def serialize(obj):
+        return {serialize}
+
+    @staticmethod
+    def deserialize(io_bytes):
+        return {identifier}.new(...)
+"""
             param_identifier = [p.identifier for p in self.params if p.identifier]
             param_inits = '\n'.join('        {0} = {1}({0})'.format(p.identifier, p.type.identifier) for p in self.params)
-            serialize_return = ' + '.join(['struct.pack(\'!i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
-            return '\n'.join([
-                'class {}(TLConstructor):'.format(self.identifier),
-                '    id = 0x{}'.format(self.id),
-                '',
-                '    @staticmethod',
-                '    def new({}):'.format(', '.join(['self'] + param_identifier)),
-                '{}'.format(param_inits),
-                '',
-                '        return {}({})'.format(self.result_type.identifier, ', '.join(param_identifier)),
-                '',
-                '    @staticmethod',
-                '    def serialize(obj):',
-                '        return {}'.format(serialize_return),
-                '',
-                '    @staticmethod',
-                '    def deserialize(io_bytes):',
-                '        return {}.new({})'.format(self.identifier, '...'),
-                '',
-                ])
+            serialize = ' + '.join(['struct.pack(\'!i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
+            return template.format(
+                identifier=self.identifier,
+                id=self.id,
+                params=param_inits,
+                serialize=serialize,
+                result_type_identifer=self.result_type.identifier)
 
     class Function(TLTranslator.Function):
         def identifier(self):
