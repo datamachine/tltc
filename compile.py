@@ -292,6 +292,17 @@ class TLTranslator:
             self.namespace = namespace
             self.identifier = identifier
 
+    class Parameter(TranslateObject):
+        def __init__(self, identifier, type_namespace, type_identifier):
+            self.identifier = identifier
+            self.type_namespace = type_namespace
+            self.type_identifier = type_identifier
+
+    class OptionalParameter(Parameter):
+        @property
+        def optional_parameter(self):
+            return self.parameter
+
     class Combinator(TranslateObject):
         def __init__(self, namespace, identifier, id, optional_params, params, result_type):
             self.identifier = identifier
@@ -311,17 +322,6 @@ class TLTranslator:
         @property
         def constructor(self):
             return self.combinator
-
-    class Parameter(TranslateObject):
-        def __init__(self, parameter):
-            self.identifier = parameter.identifier
-            self.type_namespace = parameter.type_namespace
-            self.type_identifier = parameter.type_identifier
-
-    class OptionalParameter(Parameter):
-        @property
-        def optional_parameter(self):
-            return self.parameter
         
 
     @abstractmethod
@@ -333,16 +333,16 @@ class TLTranslator:
         types = {key:translator_type.Type(t.namespace, t.identifier) for key, t in schema.types.items()}
         constructors = []
         for c in schema.constructors:
-            optional_params = [translator_type.OptionalParameter(op) for op in c.optional_params]
-            params = [translator_type.Parameter(p) for p in c.params]
+            optional_params = [translator_type.OptionalParameter(op.identifier, op.type_namespace, op.type_identifier) for op in c.optional_params]
+            params = [translator_type.Parameter(p.identifier, p.type_namespace, p.type_namespace) for p in c.params]
             result_type = types.get('{}.{}'.format(c.result_type.namespace, c.result_type.identifier))
             constructor = translator_type.Constructor(c.namespace, c.identifier, c.id, optional_params, params, result_type)
             constructors.append(constructor)
 
         functions = []
         for c in schema.functions:
-            optional_params = [translator_type.OptionalParameter(op) for op in c.optional_params]
-            params = [translator_type.Parameter(p) for p in c.params]
+            optional_params = [translator_type.OptionalParameter(op.identifier, op.type_namespace, op.type_identifier) for op in c.optional_params]
+            params = [translator_type.Parameter(p.identifier, p.type_namespace, p.type_namespace) for p in c.params]
             result_type = types.get('{}.{}'.format(c.result_type.namespace, c.result_type.identifier))
             function = translator_type.Function(c.namespace, c.identifier, c.id, optional_params, params, result_type)
             functions.append(function)
@@ -393,8 +393,12 @@ class Python3Translator(TLTranslator):
 
         def definition(self):
             return '\n'.join([
-                'class {}(TLObject):'.format(self.identifier()),
-                '    id = int(\'{:x}\', 16)'.format(self.combinator.id),
+                'class {}(TLCombinator):'.format(self.identifier),
+                '    id = int(\'{}\', 16)'.format(self.id),
+                '',
+                '    @property',
+                '    def id(self):',
+                '        return id',
                 '',
                 '    def __init__(self)',
                 '       pass',
@@ -416,11 +420,15 @@ class Python3Translator(TLTranslator):
                 'class {}(TLObject):'.format(self.identifier()),
                 '    id = int(\'{:x}\', 16)'.format(self.combinator.id),
                 '',
+                '    @property',
+                '    def id(self):',
+                '        return id',
+                '',
                 '    def __init__(self)',
-                '       pass',
+                '        pass',
                 '',
                 '    def __call__(self):',
-                '        pass',
+                '         pass',
                 ''
                 ])
 
@@ -429,19 +437,50 @@ class Python3Translator(TLTranslator):
             'from abc import ABCMeta, abstractmethod',
             ''
             'class TLObject(metaclass=ABCMeta):',
-            '   @abstractmethod',
-            '   def serialize(self):',
-            '       raise NotImplemented',
+            '    @abstractmethod',
+            '    def serialize(self):',
+            '        raise NotImplemented',
             '',
-            '   @abstractmethod',
-            '   def deserialize(self):',
-            '       raise NotImplemented',
+            '    @abstractmethod',
+            '    def deserialize(self):',
+            '        raise NotImplemented',
             ''
             ])
         )
 
         for typename, t in self.types.items():
             print(t.definition())
+
+        print('\n'.join([
+            'class TLCombinator(TLObject):',
+            '   @abstractmethod',
+            '   def __call__(self):',
+            '       raise NotImplemented',
+            '',
+            '   @abstractmethod',
+            '   @property',
+            '   def id(self):',
+            '       raise NotImplemented'
+            ''
+            ])
+        )
+
+        print('\n'.join([
+            'class TLConstructor(TLCombinator):',
+            'pass',
+            ''
+            ])
+        )
+
+        print('\n'.join([
+            'class TLFunction(TLCombinator):',
+            '   pass',
+            ''
+            ])
+        )
+
+        for c in self.constructors:
+            print(c.definition())
 
     def translate(self):
         self.define_types()
@@ -457,4 +496,3 @@ if __name__ == "__main__":
 
     python3_translator = TLTranslator.init_translator(Python3Translator, tl_schema)
     python3_translator.translate()
-    
