@@ -395,9 +395,12 @@ class Python3Translator(TLTranslator):
             call_params = ['self']
             call_params += [str(p.identifier) for p in self.params]
             call_params = ', '.join(call_params)
+            param_order = ', '.join([str(p.type_identifier) for p in self.params])
             return '\n'.join([
                 'class {}(TLCombinator):'.format(self.identifier),
                 '    id = int(\'{}\', 16)'.format(self.id),
+                '',
+                '    param_order = [{}]'.format(param_order),
                 '',
                 '    @property',
                 '    def id(self):',
