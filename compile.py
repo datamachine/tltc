@@ -347,6 +347,12 @@ class TLTranslator:
         return translator_type(schema, constructors, functions, types)
 
 class Python3Translator(TLTranslator):
+    type_template="""
+class {identifier}(TLType):
+    def __init__({param_list}):
+        {param_inits}
+"""
+
     class Type(TLTranslator.Type):
         def identifier(self):
             return self.identifier
@@ -358,16 +364,14 @@ class Python3Translator(TLTranslator):
             member_vars = []
             for c in self.constructors:
                 member_vars += [p.identifier for p in c.params if p.identifier and p.identifier not in member_vars]
-            init_params = ', '.join(['self'] + member_vars)
-            init_member_vars = '\n'.join(['        self.{0} = {0}'.format(m) for m in member_vars])
-            if not init_member_vars:
-                init_member_vars = '        pass'
-            return '\n'.join([
-                'class {identifier}(TLType):',
-                '    def __init__({})'.format(init_params),
-                '{}'.format(init_member_vars),
-                ''
-                ]).format(identifier=self.identifier)
+            param_list = ', '.join(['self'] + member_vars)
+            param_inits = '\n'.join([''] + ['        self.{0} = {0}'.format(m) for m in member_vars])
+            if not param_inits:
+                param_inits = 'pass'
+            return Python3Translator.type_template.format(
+                identifier=self.identifier,
+                param_list=param_list,
+                param_inits=param_inits)
 
     class OptionalParameter(TLTranslator.OptionalParameter):
         def identifier(self):
@@ -389,16 +393,8 @@ class Python3Translator(TLTranslator):
         def definition(self):
             return self.parameter.name
 
-    class Constructor(TLTranslator.Constructor):
-        def identifier(self):
-            return self.combinator.identifier
-
-        def declaration(self):
-            return None
-
-        def definition(self):
-            template="""
-class {identifier}(TLConstructor):
+    combinator_template="""
+class {identifier}({base_class}):
     id = 0x{id}
 
     @staticmethod
@@ -413,11 +409,21 @@ class {identifier}(TLConstructor):
     def deserialize(io_bytes):
         return {identifier}.new(...)
 """
+
+    class Constructor(TLTranslator.Constructor):
+        def identifier(self):
+            return self.combinator.identifier
+
+        def declaration(self):
+            return None
+
+        def definition(self):
             param_identifier = [p.identifier for p in self.params if p.identifier]
             param_inits = '\n'.join('        {0} = {1}({0})'.format(p.identifier, p.type.identifier) for p in self.params)
             serialize = ' + '.join(['struct.pack(\'!i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
-            return template.format(
+            return Python3Translator.combinator_template.format(
                 identifier=self.identifier,
+                base_class='TLConstructor',
                 id=self.id,
                 params=param_inits,
                 serialize=serialize,
@@ -433,70 +439,60 @@ class {identifier}(TLConstructor):
         def definition(self):
             param_identifier = [p.identifier for p in self.params if p.identifier]
             param_inits = '\n'.join('        {0} = {1}({0})'.format(p.identifier, p.type.identifier) for p in self.params)
-            serialize_return = ' + '.join(['struct.pack(\'!i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
-            return '\n'.join([
-                'class {}(TLFunction):'.format(self.identifier),
-                '    id = 0x{}'.format(self.id),
-                '',
-                '    @staticmethod',
-                '    def new({}):'.format(', '.join(['self'] + param_identifier)),
-                '{}'.format(param_inits),
-                '',
-                '        return {}({})'.format(self.result_type.identifier, ', '.join(param_identifier)),
-                '',
-                '    @staticmethod',
-                '    def serialize(obj):',
-                '        return {}'.format(serialize_return),
-                '',
-                '    @staticmethod',
-                '    def deserialize(io_bytes):',
-                '        return {}.new({})'.format(self.identifier, '...'),
-                '',
-                ])
+            serialize = ' + '.join(['struct.pack(\'!i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifier])
+            return Python3Translator.combinator_template.format(
+                identifier=self.identifier,
+                base_class='TLFunction',
+                id=self.id,
+                params=param_inits,
+                serialize=serialize,
+                result_type_identifer=self.result_type.identifier)
+
+    builtin_templates = []
+    builtin_templates += [
+"""
+from abc import ABCMeta, abstractmethod
+
+class TLObject(metaclass=ABCMeta):
+    @staticmethod
+    @abstractmethod
+    def serialize(obj):
+        raise NotImplemented
+
+    @staticmethod,
+    @abstractmethod,
+    def deserialize(self, obj, bytes_io):
+        raise NotImplemented
+"""]
+
+    builtin_templates += [
+"""
+class TLCombinator(TLObject):
+    combinators = {}
+
+    @staticmethod
+    def add_combinator(combinator_type):
+        TLCombinator.combinators[combinator.id] = combinator_type
+"""
+]
+
+    builtin_templates += [
+"""
+class TLConstructor(TLCombinator):
+    pass
+"""
+]
+
+    builtin_templates += [
+"""
+class TLFunction(TLCombinator):
+    pass
+"""
+]
 
     def define_types(self):
-        print('\n'.join([
-            'from abc import ABCMeta, abstractmethod',
-            '',
-            'class TLObject(metaclass=ABCMeta):',
-            '    @staticmethod',
-            '    @abstractmethod',
-            '    def serialize(obj):',
-            '        raise NotImplemented',
-            '',
-            '    @staticmethod',
-            '    @abstractmethod',
-            '    def deserialize(self, obj, bytes_io):',
-            '        raise NotImplemented',
-            ''
-            ])
-        )
-
-
-        print('\n'.join([
-            'class TLCombinator(TLObject):',
-            '',
-            '    combinators = {}',
-            '',
-            '    def __init__(self):',
-            '        combinators[self.id] = self',
-            ''
-            ])
-        )
-
-        print('\n'.join([
-            'class TLConstructor(TLCombinator):',
-            '    pass',
-            ''
-            ])
-        )
-
-        print('\n'.join([
-            'class TLFunction(TLCombinator):',
-            '    pass',
-            ''
-            ])
-        )
+        for t in Python3Translator.builtin_templates:
+            print(t)
 
         for typename, t in self.types.items():
             print(t.definition())
