@@ -40,22 +40,7 @@ class TLFunction(TLCombinator):
 """
 Predefined identifer / types in TL. https://core.telegram.org/mtproto/TL-formal
 """
-
-class _Number(numbers.Number, TLType):
-    def __init__(self, _data):
-        self._data = self.internal_data_type(_data)
-
-    @property
-    @abstractmethod
-    def internal_data_type(self):
-        raise NotImplemented 
-
-    @property
-    @abstractmethod
-    def _tl_type_class(self):
-        raise NotImplemented 
-
-class _Complex(_Number):
+class _Complex(numbers.Complex):
     """
     Abstract methods from numbers.Complex
     """
@@ -92,7 +77,7 @@ class _Complex(_Number):
     def __eq__(self, other):
         return self._data.__eq__(other)
 
-class _Real(_Complex):
+class _Real(numbers.Real):
     """
     Abstract methods from numbers.Real
     """
@@ -126,12 +111,25 @@ class _Real(_Complex):
     def __le__(self, other):
         return self._data.__le__(other)
 
-class IntegralType(_Real):        
+class _Rational(numbers.Rational):
+    pass
+
+class _Integral(numbers.Integral, TLType):                
     """
     Abstract methods from numbers.Integral
     """
     def __int__(self):
         return self._data.__int__()
+
+    @property
+    @abstractmethod
+    def _internal_data_type(self):
+        raise NotImplemented 
+
+    @property
+    @abstractmethod
+    def _tl_type_class(self):
+        raise NotImplemented 
 
     def __pow__(self, exponent, modulus=None):
         if modulus:
@@ -172,14 +170,86 @@ class IntegralType(_Real):
     def __invert__(self):
         return self._tl_type_class(self._data.__invert__())
 
+    """
+    Abstract methods from numbers.Complex
+    """
+    def __add__(self, other):
+        return self._tl_type_class(self._data.__add__(other))
+
+    def __radd__(self, other):
+        return self.classtype(self._data.__radd__(other))
+
+    def __neg__(self):
+        return self._tl_type_class(self._data.__neg__())
+
+    def __pos__(self):
+        return self._tl_type_class(self._data.__pos__())
+
+    def __mul__(self, other):
+        return self._tl_type_class(self._data.__mul__(other))
+
+    def __rmul__(self, other):
+        return self._tl_type_class(self._data.__rmul__(other))
+
+    def __truediv__(self, other):
+        return self._tl_type_class(self._data.__truediv__(other))
+
+    def __rtruediv__(self, other):
+        return self._tl_type_class(self._data.__rtruediv__(other))
+
+    def __rpow__(self, base):
+        return self._tl_type_class(self._data.__rpow__(exponent))
+
+    def __abs__(self):
+        return self._tl_type_class(self._data.__abs__())
+
+    def __eq__(self, other):
+        return self._data.__eq__(other)
+
+    """
+    Abstract methods from numbers.Real
+    """        
+    def __trunc__(self):
+        return self._tl_type_class(self._data.__trunc__())
+
+    def __floor__(self):
+        return self._tl_type_class(self._data.__floor__())
+
+    def __ceil__(self):
+        return self._tl_type_class(self._data.__ceil__())
+
+    def __round__(self, ndigits=None):
+        return self._tl_type_class(self._data.__round__(ndigits=ndigits))
+
+    def __floordiv__(self, other):
+        return self._tl_type_class(self._data.__floordiv__(other))
+
+    def __rfloordiv__(self, other):
+        return self._tl_type_class(self._data.__rfloordiv__(other))
+        
+    def __mod__(self, other):
+        return self._tl_type_class(self._data.__mod__(other))
+        
+    def __rmod__(self, other):
+        return self._tl_type_class(self._data.__rmod__(other))
+        
+    def __lt__(self, other):
+        return self._data.__lt__(other)
+        
+    def __le__(self, other):
+        return self._data.__le__(other)
+
 """
 Int https://core.telegram.org/type/int
 """
-class Int(IntegralType):
+class Int(_Integral):
     _struct = struct.Struct('!i')
 
+    def __init__(self, _int):
+        self._data = int(_int)
+
     @property
-    def internal_data_type(self):
+    def _internal_data_type(self):
         return int
 
     @property
@@ -194,11 +264,14 @@ Int.register(int)
 """
 Long https://core.telegram.org/type/long
 """
-class Long(IntegralType):
+class Long(_Integral):        
     _struct = struct.Struct('!q')
 
+    def __init__(self, _long):
+        self._data = int(_long)
+
     @property
-    def internal_data_type(self):
+    def _internal_data_type(self):
         return int
 
     @property
@@ -213,8 +286,11 @@ Long.register(int)
 """
 Bool https://core.telegram.org/type/bool
 """
-class Bool(IntegralType):
+class Bool(_Integral):
     _struct = struct.Struct('!q')
+
+    def __init__(self, _bool):
+        self._data = bool(_bool)
 
     @property
     def internal_data_type(self):
