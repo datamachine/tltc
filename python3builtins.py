@@ -52,7 +52,7 @@ class _Number(numbers.Number, TLType):
 
     @property
     @abstractmethod
-    def result_type_class(self):
+    def _tl_type_class(self):
         raise NotImplemented 
 
 class _Complex(_Number):
@@ -60,34 +60,34 @@ class _Complex(_Number):
     Abstract methods from numbers.Complex
     """
     def __add__(self, other):
-        return self.result_type_class(self._data.__add__(other))
+        return self._tl_type_class(self._data.__add__(other))
 
     def __radd__(self, other):
         return self.classtype(self._data.__radd__(other))
 
     def __neg__(self):
-        return self.result_type_class(self._data.__neg__())
+        return self._tl_type_class(self._data.__neg__())
 
     def __pos__(self):
-        return self.result_type_class(self._data.__pos__())
+        return self._tl_type_class(self._data.__pos__())
 
     def __mul__(self, other):
-        return self.result_type_class(self._data.__mul__(other))
+        return self._tl_type_class(self._data.__mul__(other))
 
     def __rmul__(self, other):
-        return self.result_type_class(self._data.__rmul__(other))
+        return self._tl_type_class(self._data.__rmul__(other))
 
     def __truediv__(self, other):
-        return self.result_type_class(self._data.__truediv__(other))
+        return self._tl_type_class(self._data.__truediv__(other))
 
     def __rtruediv__(self, other):
-        return self.result_type_class(self._data.__rtruediv__(other))
+        return self._tl_type_class(self._data.__rtruediv__(other))
 
     def __rpow__(self, base):
-        return self.result_type_class(self._data.__rpow__(exponent))
+        return self._tl_type_class(self._data.__rpow__(exponent))
 
     def __abs__(self):
-        return self.result_type_class(self._data.__abs__())
+        return self._tl_type_class(self._data.__abs__())
 
     def __eq__(self, other):
         return self._data.__eq__(other)
@@ -97,28 +97,28 @@ class _Real(_Complex):
     Abstract methods from numbers.Real
     """
     def __trunc__(self):
-        return self.result_type_class(self._data.__trunc__())
+        return self._tl_type_class(self._data.__trunc__())
 
     def __floor__(self):
-        return self.result_type_class(self._data.__floor__())
+        return self._tl_type_class(self._data.__floor__())
 
     def __ceil__(self):
-        return self.result_type_class(self._data.__ceil__())
+        return self._tl_type_class(self._data.__ceil__())
 
     def __round__(self, ndigits=None):
-        return self.result_type_class(self._data.__round__(ndigits=ndigits))
+        return self._tl_type_class(self._data.__round__(ndigits=ndigits))
 
     def __floordiv__(self, other):
-        return self.result_type_class(self._data.__floordiv__(other))
+        return self._tl_type_class(self._data.__floordiv__(other))
 
     def __rfloordiv__(self, other):
-        return self.result_type_class(self._data.__rfloordiv__(other))
+        return self._tl_type_class(self._data.__rfloordiv__(other))
         
     def __mod__(self, other):
-        return self.result_type_class(self._data.__mod__(other))
+        return self._tl_type_class(self._data.__mod__(other))
         
     def __rmod__(self, other):
-        return self.result_type_class(self._data.__rmod__(other))
+        return self._tl_type_class(self._data.__rmod__(other))
         
     def __lt__(self, other):
         return self._data.__lt__(other)
@@ -135,42 +135,42 @@ class IntegralType(_Real):
 
     def __pow__(self, exponent, modulus=None):
         if modulus:
-            return self.result_type_class(self._data.__pow__(exponent, modulus=modulus))
+            return self._tl_type_class(self._data.__pow__(exponent, modulus=modulus))
         else:
-            return self.result_type_class(self._data.__pow__(exponent))
+            return self._tl_type_class(self._data.__pow__(exponent))
 
     def __lshift__(self, other):
-        return self.result_type_class(self._data.__lshift__(other))
+        return self._tl_type_class(self._data.__lshift__(other))
 
     def __rlshift__(self, other):
-        return self.result_type_class(self._data.__rlshift__(other))
+        return self._tl_type_class(self._data.__rlshift__(other))
 
     def __rshift__(self, other):
-        return self.result_type_class(self._data.__rshift__(other))
+        return self._tl_type_class(self._data.__rshift__(other))
 
     def __rrshift__(self, other):
-        return self.result_type_class(self._data.__rrshift__(other))
+        return self._tl_type_class(self._data.__rrshift__(other))
 
     def __and__(self, other):
-        return self.result_type_class(self._data.__and__(other))
+        return self._tl_type_class(self._data.__and__(other))
 
     def __rand__(self, other):
-        return self.result_type_class(self._data.__rand__(other))
+        return self._tl_type_class(self._data.__rand__(other))
 
     def __xor__(self, other):
-        return self.result_type_class(self._data.__xor__(other))
+        return self._tl_type_class(self._data.__xor__(other))
 
     def __rxor__(self, other):
-        return self.result_type_class(self._data.__rxor__(other))
+        return self._tl_type_class(self._data.__rxor__(other))
 
     def __or__(self, other):
-        return self.result_type_class(self._data.__or__(other))
+        return self._tl_type_class(self._data.__or__(other))
 
     def __ror__(self, other):
-        return self.result_type_class(self._data.__ror__(other))
+        return self._tl_type_class(self._data.__ror__(other))
 
     def __invert__(self):
-        return self.result_type_class(self._data.__invert__())
+        return self._tl_type_class(self._data.__invert__())
 
 """
 Int https://core.telegram.org/type/int
@@ -183,7 +183,7 @@ class Int(IntegralType):
         return int
 
     @property
-    def result_type_class(self):
+    def _tl_type_class(self):
         return type(self)
 
     def serialize(self):
@@ -202,7 +202,7 @@ class Long(IntegralType):
         return int
 
     @property
-    def result_type_class(self):
+    def _tl_type_class(self):
         return type(self)
 
     def serialize(obj):
@@ -221,7 +221,7 @@ class Bool(IntegralType):
         return bool
 
     @property
-    def result_type_class(self):
+    def _tl_type_class(self):
         return type(self)
 
     def serialize(obj):
