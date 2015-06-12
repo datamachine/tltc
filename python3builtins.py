@@ -43,7 +43,7 @@ Predefined identifer / types in TL. https://core.telegram.org/mtproto/TL-formal
 class _Complex(numbers.Complex):
     """
     Abstract methods from numbers.Complex
-    """
+    """    
     def __add__(self, other):
         return self._tl_type_class(self._data.__add__(other))
 
@@ -78,11 +78,24 @@ class _Complex(numbers.Complex):
         return self._data.__eq__(other)
 
 class _Real(numbers.Real):
+    @property
+    @abstractmethod
+    def _internal_data_type(self):
+        raise NotImplemented 
+
+    @property
+    @abstractmethod
+    def _tl_type_class(self):
+        raise NotImplemented 
+
     """
     Abstract methods from numbers.Real
     """
+    def __float__(self):
+        return self._data
+
     def __trunc__(self):
-        return self._tl_type_class(self._data.__trunc__())
+        return self._data.__trunc__()
 
     def __floor__(self):
         return self._tl_type_class(self._data.__floor__())
@@ -111,10 +124,49 @@ class _Real(numbers.Real):
     def __le__(self, other):
         return self._data.__le__(other)
 
+    """
+    Abstract methods from numbers.Complex
+    """
+    def __add__(self, other):
+        return self._tl_type_class(self._data.__add__(other))
+
+    def __radd__(self, other):
+        return self.classtype(self._data.__radd__(other))
+
+    def __neg__(self):
+        return self._tl_type_class(self._data.__neg__())
+
+    def __pos__(self):
+        return self._tl_type_class(self._data.__pos__())
+
+    def __mul__(self, other):
+        return self._tl_type_class(self._data.__mul__(other))
+
+    def __rmul__(self, other):
+        return self._tl_type_class(self._data.__rmul__(other))
+
+    def __truediv__(self, other):
+        return self._tl_type_class(self._data.__truediv__(other))
+
+    def __rtruediv__(self, other):
+        return self._tl_type_class(self._data.__rtruediv__(other))
+
+    def __pow__(self, base):
+        return self._tl_type_class(self._data.__pow__(exponent))
+
+    def __rpow__(self, base):
+        return self._tl_type_class(self._data.__rpow__(exponent))
+
+    def __abs__(self):
+        return self._tl_type_class(self._data.__abs__())
+
+    def __eq__(self, other):
+        return self._data.__eq__(other)
+
 class _Rational(numbers.Rational):
     pass
 
-class _Integral(numbers.Integral, TLType):                
+class _Integral(numbers.Integral):                
     """
     Abstract methods from numbers.Integral
     """
@@ -242,7 +294,7 @@ class _Integral(numbers.Integral, TLType):
 """
 Int https://core.telegram.org/type/int
 """
-class Int(_Integral):
+class Int(_Integral, TLType):
     _struct = struct.Struct('!i')
 
     def __init__(self, _int):
@@ -264,7 +316,7 @@ Int.register(int)
 """
 Long https://core.telegram.org/type/long
 """
-class Long(_Integral):        
+class Long(_Integral, TLType):        
     _struct = struct.Struct('!q')
 
     def __init__(self, _long):
@@ -286,7 +338,7 @@ Long.register(int)
 """
 Bool https://core.telegram.org/type/bool
 """
-class Bool(_Integral):
+class Bool(_Integral, TLType):
     _struct = struct.Struct('!q')
 
     def __init__(self, _bool):
@@ -304,6 +356,24 @@ class Bool(_Integral):
         return Bool._struct.pack(self._data)
 
 Bool.register(bool)
+
+class Double(_Real, TLType):
+    _struct = struct.Struct('!d')
+
+    def __init__(self, _double):
+        self._data = float(_double)
+
+    @property
+    def _internal_data_type(self):
+        return float 
+
+    @property
+    def _tl_type_class(self):
+        return type(self) 
+
+    def serialize(self):
+        return Double._struct.pack(self._data)
+Double.register(float)
 
 """
 """

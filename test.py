@@ -22,3 +22,10 @@ if __name__ == '__main__':
 
     v._data += [Int(1), Int(4), Int(6)]
     print(v.serialize())
+
+    d = Double(2.3)
+
+    print(d)
+    print(int(d))
+    print(float(d))
+    print(d.serialize())
