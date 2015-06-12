@@ -2,8 +2,6 @@
 
 from python3builtins import *
 
-import struct
-
 if __name__ == '__main__':
     i = Int(1)
     print(type(i))
