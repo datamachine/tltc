@@ -1,18 +1,14 @@
 
 from abc import ABCMeta, abstractmethod
-from collections import abc
 import numbers
+import struct
 
 """
 Types used as base classes for TL combinators and types
 """
 class TLType(metaclass=ABCMeta):
     @abstractmethod
-    def serialize(obj):
-        raise NotImplemented
-
-    @abstractmethod
-    def deserialize(self, bytes_io):
+    def serialize(self):
         raise NotImplemented
 
 
@@ -180,6 +176,8 @@ class IntegralType(_Real):
 Int https://core.telegram.org/type/int
 """
 class Int(IntegralType):
+    _struct = struct.Struct('!i')
+
     @property
     def internal_data_type(self):
         return int
@@ -188,17 +186,17 @@ class Int(IntegralType):
     def result_type_class(self):
         return type(self)
 
-    def serialize(obj):
-        pass
+    def serialize(self):
+        return Int._struct.pack(self._data)
 
-    def deserialize(io_string):
-        pass
 Int.register(int)
 
 """
 Long https://core.telegram.org/type/long
 """
 class Long(IntegralType):
+    _struct = struct.Struct('!q')
+
     @property
     def internal_data_type(self):
         return int
@@ -208,16 +206,16 @@ class Long(IntegralType):
         return type(self)
 
     def serialize(obj):
-        pass
+        return Long._struct.pack(self._data)
 
-    def deserialize(io_string):
-        pass
 Long.register(int)
 
 """
 Bool https://core.telegram.org/type/bool
 """
 class Bool(IntegralType):
+    _struct = struct.Struct('!q')
+
     @property
     def internal_data_type(self):
         return bool
@@ -227,8 +225,21 @@ class Bool(IntegralType):
         return type(self)
 
     def serialize(obj):
-        pass
+        return Bool._struct.pack(self._data)
 
-    def deserialize(io_string):
-        pass
 Bool.register(bool)
+
+"""
+"""
+class Vector(TLType):
+    def __init__(self, vector_type):
+        if not isinstance(vector_type, type):
+            raise TypeError('vector_type must be a type')
+        self._type = vector_type
+        self._data = []
+
+    def serialize(self):
+        result = b''
+        for d in self._data:
+            result += d.serialize()
+        return result
