@@ -1,4 +1,4 @@
-class Parameter(TLTranslator.Parameter):
+class Python34Parameter(TLTranslator.Parameter):
     def identifier(self):
         return self._identifier
 

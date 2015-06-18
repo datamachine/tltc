@@ -1,4 +1,4 @@
-class Function(TLTranslator.Function):
+class Python34Function(TLTranslator.Function):
     def identifier(self):
         return self.identifier
 

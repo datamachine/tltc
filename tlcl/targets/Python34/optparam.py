@@ -1,4 +1,6 @@
-class OptionalParameter(TLTranslator.OptionalParameter):
+from tlcl.translate.optparam import TLOptionalParameter
+
+class Python34OptionalParameter(TLOptionalParameter):
     def identifier(self):
         return self._identifier
 

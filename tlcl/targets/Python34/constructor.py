@@ -15,7 +15,7 @@ class {identifier}({base_class}):
         return {identifier}.new(...)
 """
 
-class Constructor(TLTranslator.Constructor):
+class Python34Constructor(TLTranslator.Constructor):
     def identifier(self):
         return self.combinator.identifier
 
