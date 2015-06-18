@@ -1,3 +1,5 @@
+from tlcl.translator import TLTranslator
+
 class Python34Translator(TLTranslator):
     def define_builtins(self):
         pass

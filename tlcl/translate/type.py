@@ -1,7 +1,7 @@
-from .identifier import TLIdentifer
+from .identifier import TLIdentifier
 
 class TLType:
-    def __init__(self, namespace:TLNamespace, identifier:TLIdentifer):
-        self.namespace = TLNamespace(namespace)
-        self.identifier = TLIdentifer(identifier)
+    def __init__(self, namespace, identifier):
+        self.namespace = str(namespace)
+        self.identifier = str(identifier)
         self.ident_full = '{}.{}'.format(namespace, identifier) if namespace else identifier

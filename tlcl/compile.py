@@ -9,7 +9,8 @@ from pathlib import Path
 
 
 
-
+from .syntax.tokens import *
+from .translate.type import *
 
 class TLParameter:
     def __init__(self, identifier, type_namespace, type_identifier):
@@ -204,68 +205,6 @@ class TLSchema:
             if state == 'quit':
                 return _fsm_error(i, kwargs)
 
-class TLTranslator:
-    def __init__(self, schema, constructors, functions, types):
-        self.schema = schema
-        self.constructors = constructors
-        self.functions = functions
-        self.types = types
-
-    class TranslateObject(metaclass=ABCMeta):
-        @abstractmethod
-        def identifier(self):
-            raise NotImplemented
-
-        @abstractmethod
-        def declaration(self):
-            raise NotImplemented
-
-        @abstractmethod
-        def definition(self):
-            raise NotImplemented
-
-    class Type(TranslateObject):
-        def __init__(self, namespace, identifier):
-            self.namespace = namespace
-            self.identifier = identifier
-            self.ident_full = '{}.{}'.format(namespace, identifier) if namespace else identifier
-            self.constructors = []
-
-    class Parameter(TranslateObject):
-        def __init__(self, _identifier, type):
-            self._identifier = _identifier
-            self.type = type
-
-    class OptionalParameter(Parameter):
-        @property
-        def optional_parameter(self):
-            return self.parameter
-
-    class Combinator(TranslateObject):
-        def __init__(self, namespace, identifier, id, optional_params, params, result_type):
-            self.identifier = identifier
-            self.namespace = namespace
-            self.id = id
-            self.optional_params = optional_params
-            self.params = params
-            self.result_type = result_type
-
-    class Function(Combinator):
-        @property
-        def function(self):
-            return self.combinator
-
-
-    class Constructor(Combinator):
-        @property
-        def constructor(self):
-            return self.combinator
-        
-
-    @abstractmethod
-    def translate(self):
-        raise NotImplemented
-
     @staticmethod
     def init_translator(translator_type, schema):
         types = {key:translator_type.Type(t.namespace, t.identifier) for key, t in schema.types.items()}
@@ -291,20 +230,20 @@ class TLTranslator:
 if __name__ == "__main__":
     from argparse import ArgumentParser
     from pathlib import Path
-
-    target_path = Path('./targets')
-    suported_langs = [target for target in target.listdir()]
-    
+    import sys
+    from .targets import AVAILABLE_TARGETS
 
     parser = ArgumentParser(description='Translate a TL schema to the specified target language')
-    parser.add_argument('-t', '--target', help='specifies the target language: currently supported: {}')
+    parser.add_argument('-t', '--target', required=True, choices=AVAILABLE_TARGETS.keys(), help='supported targets: {}'.format(', '.join(AVAILABLE_TARGETS.keys())))
+    parser.add_argument('source', nargs='?', help='TL source file')
+    args = parser.parse_args(sys.argv[1:])
 
     schema = None
-    with open(sys.argv[1]) as fp:
+    with open(args.source, 'r') as fp:
         schema = fp.read()
 
     tl_schema = TLSchema(schema)
     tl_schema.generate_intermediate_objects()
 
-    python3_translator = TLTranslator.init_translator(Python3Translator, tl_schema)
-    python3_translator.translate()
+    #python3_translator = TLTranslator.init_translator(Python3Translator, tl_schema)
+    #python3_translator.translate()
