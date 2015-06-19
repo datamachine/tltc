@@ -1,21 +1,13 @@
+from enum import Enum
+
 
 class IRIdentifier:
+    _IdentifierKind = Enum('IdentifierKind', ['NAMESPACE', 'COMBINATOR', 'BOXED_TYPE', 'BARE_TYPE'])
+
     def __init__(self, *, namespace=None, ident=None):
         self.namespace = namespace
         self.ident = ident
         if namespace is None:
-            self.full_ident = '{ident}'.format(ident=ident)
+            self.full_ident = self.ident
         else:
-            self.full_ident = '{namespace}.{ident}'.format(namespace=namespace, ident=ident)
-
-
-if __name__ == '__main__':
-    ident = TLIdentifier('myIdent')
-    ns = NamespaceIdentifier('myNamespace')
-    comb1 = CombinatorIdentifier('myNamespace', 'myIdent')
-    comb2 = CombinatorIdentifier(ns, ident)
-
-    print(ident)
-    print(ns)
-    print(comb1)
-    print(comb2)
+            self.full_ident = '{}.{}'.format(namespace, ident)

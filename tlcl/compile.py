@@ -252,7 +252,7 @@ if __name__ == "__main__":
     tl_schema = TLSchema(schema)
     tl_schema.generate_intermediate_objects()
 
-    print('\n'.join([str(t) for t in tl_schema.types]))
+    #print('\n'.join([str(t) for t in tl_schema.types]))
 
     #python3_translator = TLTranslator.init_translator(Python3Translator, tl_schema)
     #python3_translator.translate()
