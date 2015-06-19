@@ -1,32 +1,13 @@
-from .tlobject import TLObject
 
-class TLIdentifier(TLObject):
-    def __str__(self):
-        return self.identifier
+class IRIdentifier:
+    def __init__(self, *, namespace=None, ident=None):
+        self.namespace = namespace
+        self.ident = ident
+        if namespace is None:
+            self.full_ident = '{ident}'.format(ident=ident)
+        else:
+            self.full_ident = '{namespace}.{ident}'.format(namespace=namespace, ident=ident)
 
-class NamespaceIdentifier(TLIdentifier):
-    pass
-
-class CombinatorIdentifier(TLObject):
-    _combinators = []
-
-    __slots__ = ('namespace', 'identifier')
-
-    def __new__(cls, namespace, identifier):
-        result = super(CombinatorIdentifier, cls).__new__(cls)
-        result.namespace = NamespaceIdentifier(namespace)
-        result.identifier = TLIdentifier(identifier)
-        # Combinator identifiers must be unique
-        if result in CombinatorIdentifier._combinators:
-            raise SyntaxError('Combinator already defined: {}'.format(CombinatorIdentifier._combinators))
-
-        return result
-
-    def __init__(self, namespace, identifier):
-        pass
-
-    def __str__(self):
-        return '{}.{}'.format(self.namespace, self.identifier)
 
 if __name__ == '__main__':
     ident = TLIdentifier('myIdent')

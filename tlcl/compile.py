@@ -10,7 +10,8 @@ from pathlib import Path
 
 
 from .syntax.tlsyntax import TLSyntax
-from .translate.type import *
+from .ir.type import IRType
+from .ir.identifier import IRIdentifier
 
 class TLParameter:
     def __init__(self, identifier, type_namespace, type_identifier):
@@ -150,7 +151,9 @@ class TLSchema:
 
         t = self.types.get(groups['optional_parameter_type'], None)
         if not t:
-            t = TLType(groups['optional_parameter_type_namespace'], groups['optional_parameter_type_identifier'])
+            identifer = IRIdentifier(namespace=groups['optional_parameter_type_namespace'], 
+                                     ident=groups['optional_parameter_type_identifier'])
+            t = IRType(identifer)
             self.types[groups['optional_parameter_type']] = t
 
         combinator.add_optional_parameter(groups['optional_parameter_identifier'], groups['optional_parameter_type_namespace'], groups['optional_parameter_type_identifier'])
@@ -163,7 +166,9 @@ class TLSchema:
 
         t = self.types.get(groups['parameter_type'], None)
         if not t:
-            t = TLType(groups['parameter_type_namespace'], groups['parameter_type_identifier'])
+            identifer = IRIdentifier(namespace=groups['parameter_type_namespace'], 
+                                     ident=groups['parameter_type_namespace'])
+            t = IRType(identifer)
             self.types[groups['parameter_type']] = t
 
         combinator.add_parameter(groups['parameter_identifier'], groups['parameter_type_namespace'], groups['parameter_type_identifier'])
@@ -176,7 +181,9 @@ class TLSchema:
 
         t = self.types.get(groups['combinator_result_type'], None)
         if not t:
-            t = TLType(groups['combinator_result_type_namespace'], groups['combinator_result_type_identifier'])
+            identifer = IRIdentifier(namespace=groups['combinator_result_type_namespace'], 
+                                     ident=groups['combinator_result_type_identifier'])
+            t = IRType(identifer)
             self.types[groups['combinator_result_type']] = t
         combinator.set_result_type(t)
 
@@ -244,6 +251,8 @@ if __name__ == "__main__":
 
     tl_schema = TLSchema(schema)
     tl_schema.generate_intermediate_objects()
+
+    print('\n'.join([str(t) for t in tl_schema.types]))
 
     #python3_translator = TLTranslator.init_translator(Python3Translator, tl_schema)
     #python3_translator.translate()

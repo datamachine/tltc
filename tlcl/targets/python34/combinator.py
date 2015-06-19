@@ -1,4 +1,4 @@
-combinator_template="""
+lscombinator_template="""
 class {identifier}({base_class}):
     id = {hex_id}
 
