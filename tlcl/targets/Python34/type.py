@@ -4,7 +4,7 @@ class {identifier}(TLType):
         {param_inits}
 """
 
-class Python34Type(TLTranslator.Type):
+class Python34Type:
     def identifier(self):
         return self.identifier
 

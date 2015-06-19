@@ -25,9 +25,9 @@ _SIMPLE_IDENTS_AND_KEYWORDS = OrderedDict()
 _SIMPLE_IDENTS_AND_KEYWORDS['lc-ident'] = r'{lc-letter}{ident-char}*'
 _SIMPLE_IDENTS_AND_KEYWORDS['uc-ident'] = r'{uc-letter}{ident-char}*'
 _SIMPLE_IDENTS_AND_KEYWORDS['namespace-ident'] = r'{lc-ident}'
-_SIMPLE_IDENTS_AND_KEYWORDS['lc-ident-ns'] = r'(:?{namespace-ident}\.|)(:?{lc-ident})'
-_SIMPLE_IDENTS_AND_KEYWORDS['uc-ident-ns'] = r'(:?{namespace-ident}\.|)(:?{uc-ident})'
-_SIMPLE_IDENTS_AND_KEYWORDS['lc-ident-full'] = r'(:?{lc-ident-ns})#({hex-digit}{{8}})'
+_SIMPLE_IDENTS_AND_KEYWORDS['lc-ident-ns'] = r'(:?{namespace-ident}\.|){lc-ident}'
+_SIMPLE_IDENTS_AND_KEYWORDS['uc-ident-ns'] = r'(:?{namespace-ident}\.|){uc-ident}'
+_SIMPLE_IDENTS_AND_KEYWORDS['lc-ident-full'] = r'{lc-ident-ns}#{hex-digit}{{1,8}}'
 
 # TODO, These do not belon in this category
 _SIMPLE_IDENTS_AND_KEYWORDS['var-ident'] = r'(:?{lc-ident}|{uc-ident})'
