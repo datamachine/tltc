@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 
-from .syntax.tokens import *
+from .syntax.tlsyntax import TLSyntax
 from .translate.type import *
 
 class TLParameter:
@@ -70,7 +70,7 @@ class TLSchema:
                 '(?:(?P<combinator_namespace>{lc-ident-ns})\.|)'
                 '(?P<combinator_identifier>\S+)'
                 '#(?P<combinator_id>{hex-digit}+)'
-            ')'.format(**TL),
+            ')'.format(**TLSyntax.TL),
             # optional parameter names and types
             '(?P<optional_parameter>'
                     '(?P<optional_parameter_identifier>\S+):'
@@ -79,7 +79,7 @@ class TLSchema:
                         '(?P<optional_parameter_type_identifier>\S+)'
                     ')'
                 '\}}'
-            ')'.format(**TL),
+            ')'.format(**TLSyntax.TL),
             # parameter's names and types
             '(?P<parameter>'
                 '(?:'
@@ -95,23 +95,23 @@ class TLSchema:
                 '|\[\s+'
                     '(?P<parameter_multiplicity>\S+)'
                   '\s+\]'
-            ')'.format(**TL),
+            ')'.format(**TLSyntax.TL),
 
             # get the combinator's Type
             '=\s*'
             '(?P<combinator_result_type>'
                 '(?:(?P<combinator_result_type_namespace>{lc-ident-ns})\.|)'
                 '(?P<combinator_result_type_identifier>[^;]+)'
-            ')'.format(**TL),
+            ')'.format(**TLSyntax.TL),
 
             # end of constructor
             '(?P<combinator_end>;)',
 
             # start the function section
-            '(?P<start_functions>{triple-minus}functions{triple-minus})'.format(**TOKENS),
+            '(?P<start_functions>{triple-minus}functions{triple-minus})'.format(**TLSyntax.TL),
 
             # start the types section
-            '(?P<start_types>{triple-minus}types{triple-minus})'.format(**TOKENS),
+            '(?P<start_types>{triple-minus}types{triple-minus})'.format(**TLSyntax.TL),
 
             # catch anything else
             '(?P<invalid_syntax>\S+)'

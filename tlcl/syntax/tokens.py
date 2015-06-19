@@ -1,61 +1,73 @@
+from collections import OrderedDict
+from pprint import PrettyPrinter
+
+pp = PrettyPrinter(indent=2)
 
 # Character classes
-TL = {}
-TL['lc-letter'] = 'a-z'
-TL['uc-letter'] = 'A-Z'
-TL['digit'] = '0-9'
-TL['hex-digit'] = '{digit}a-f'.format(**TL)
-TL['underscore'] = '_'
-TL['letter'] = '{lc-letter}{uc-letter}'.format(**TL)
-TL['ident-char'] = '{letter}{digit}{underscore}'.format(**TL)
-TL = { name: '[{}]'.format(c) for name, c in TL.items() }
+_CHARACTER_CLASSES = OrderedDict()
+_CHARACTER_CLASSES['_lc-letter'] = 'a-z'
+_CHARACTER_CLASSES['_uc-letter'] = 'A-Z'
+_CHARACTER_CLASSES['_digit'] = '0-9'
+_CHARACTER_CLASSES['_hex-digit'] = '{_digit}a-f'
+_CHARACTER_CLASSES['_underscore'] = '_'
+_CHARACTER_CLASSES['_letter'] = '{_lc-letter}{_uc-letter}'
+_CHARACTER_CLASSES['_ident-char'] = '{_letter}{_digit}{_underscore}'
+_CHARACTER_CLASSES['lc-letter'] = '[{_lc-letter}]'
+_CHARACTER_CLASSES['uc-letter'] = '[{_uc-letter}]'
+_CHARACTER_CLASSES['digit'] = '[{_digit}]'
+_CHARACTER_CLASSES['hex-digit'] = '[{_hex-digit}]'
+_CHARACTER_CLASSES['underscore'] = '[{_underscore}]'
+_CHARACTER_CLASSES['letter'] = '[{_letter}]'
+_CHARACTER_CLASSES['ident-char'] = '[{_ident-char}]'
 
 # Simple identifiers and keywords:
-TL['lc-ident'] = r'{lc-letter}{ident-char}*'.format(**TL)
-TL['uc-ident'] = r'{uc-letter}{ident-char}*'.format(**TL)
-TL['namespace-ident'] = r'{lc-ident}'.format(**TL)
-TL['lc-ident-ns'] = r'(:?{namespace-ident}\.|)(:?{lc-ident})'.format(**TL)
-TL['uc-ident-ns'] = r'(:?{namespace-ident}\.|)(:?{uc-ident})'.format(**TL)
-TL['lc-ident-full'] = r'(:?{lc-ident-ns})#({hex-digit}{{8}})'.format(**TL)
+_SIMPLE_IDENTS_AND_KEYWORDS = OrderedDict()
+_SIMPLE_IDENTS_AND_KEYWORDS['lc-ident'] = r'{lc-letter}{ident-char}*'
+_SIMPLE_IDENTS_AND_KEYWORDS['uc-ident'] = r'{uc-letter}{ident-char}*'
+_SIMPLE_IDENTS_AND_KEYWORDS['namespace-ident'] = r'{lc-ident}'
+_SIMPLE_IDENTS_AND_KEYWORDS['lc-ident-ns'] = r'(:?{namespace-ident}\.|)(:?{lc-ident})'
+_SIMPLE_IDENTS_AND_KEYWORDS['uc-ident-ns'] = r'(:?{namespace-ident}\.|)(:?{uc-ident})'
+_SIMPLE_IDENTS_AND_KEYWORDS['lc-ident-full'] = r'(:?{lc-ident-ns})#({hex-digit}{{8}})'
 
-TL['var-ident'] = r'(:?{lc-ident}|{uc-ident})'.format(**TL)
-TL['boxed-type-ident'] = r'{uc-ident-ns}'.format(**TL)
-TL['type-ident'] = r'(:?{boxed-type-ident}|{lc-ident-ns}|#)'.format(**TL)
+# TODO, These do not belon in this category
+_SIMPLE_IDENTS_AND_KEYWORDS['var-ident'] = r'(:?{lc-ident}|{uc-ident})'
+_SIMPLE_IDENTS_AND_KEYWORDS['boxed-type-ident'] = r'{uc-ident-ns}'
+_SIMPLE_IDENTS_AND_KEYWORDS['type-ident'] = r'(:?{boxed-type-ident}|{lc-ident-ns}|#)'
 
 # Tokens
-TOKENS = {}
-TOKENS['underscore'] = '_'
-TOKENS['colon'] = ':'
-TOKENS['semicolon'] = ';'
-TOKENS['open-par'] = '('
-TOKENS['close-par'] = ')'
-TOKENS['open-bracket'] = '['
-TOKENS['close-bracket'] = ']'
-TOKENS['open-brace'] = '{'
-TOKENS['close-brace'] = '}'
-TOKENS['triple-minus'] = '---'
-TOKENS['nat-const'] = '{digit}+'.format(**TL)
-TOKENS['lc-ident-full'] = TL['lc-ident-full']
-TOKENS['lc-ident'] = TL['lc-ident']
-TOKENS['uc-ident-ns'] = TL['uc-ident-ns']
-TOKENS['equals'] = '='
-TOKENS['hash'] = '#'
-TOKENS['question-mark'] = '?'
-TOKENS['percent'] = '%'
-TOKENS['plus'] = '+'
-TOKENS['langle'] = '<'
-TOKENS['rangle'] = '>'
-TOKENS['comma'] = ','
-TOKENS['dot'] = '.'
-TOKENS['asterisk'] = '*'
-TOKENS['excl-mark'] = '!'
-TOKENS['Final-kw'] = 'Final'
-TOKENS['New-kw'] = 'New'
-TOKENS['Empty-kw'] = 'Empty'
-TOKENS = {name: r'\s*{}'.format(item) for name, item in TOKENS.items()}
+_TOKENS = OrderedDict()
+_TOKENS['underscore'] = '_'
+_TOKENS['colon'] = ':'
+_TOKENS['semicolon'] = ';'
+_TOKENS['open-par'] = '\('
+_TOKENS['close-par'] = '\)'
+_TOKENS['open-bracket'] = '['
+_TOKENS['close-bracket'] = ']'
+_TOKENS['open-brace'] = '{{'
+_TOKENS['close-brace'] = '}}'
+_TOKENS['triple-minus'] = '\-\-\-'
+_TOKENS['nat-const'] = '{digit}+'
+_TOKENS['lc-ident-full'] = '{lc-ident-full}'
+_TOKENS['lc-ident'] = '{lc-ident}'
+_TOKENS['uc-ident-ns'] = '{uc-ident-ns}'
+_TOKENS['equals'] = '='
+_TOKENS['hash'] = '#'
+_TOKENS['question-mark'] = '\?'
+_TOKENS['percent'] = '%'
+_TOKENS['plus'] = '\+'
+_TOKENS['langle'] = '<'
+_TOKENS['rangle'] = '>'
+_TOKENS['comma'] = ','
+_TOKENS['dot'] = '\.'
+_TOKENS['asterisk'] = '\*'
+_TOKENS['excl-mark'] = '\!'
+_TOKENS['Final-kw'] = 'Final'
+_TOKENS['New-kw'] = 'New'
+_TOKENS['Empty-kw'] = 'Empty'
 
 COMBINATOR_DECL = {}
-COMBINATOR_DECL['full-combinator-id'] = '\s*{lc-ident-full}'.format(**TL)
-COMBINATOR_DECL['opt-arg'] = r'\s*{{(?P<parameter>{var-ident}):(?P<type>{type-ident})}}'.format(**TL)
-COMBINATOR_DECL['arg'] = r'\s{var-ident}:{var-ident}'.format(**TL)
-COMBINATOR_DECL['result-type'] = r'\s*=\s*(?P<result_type>.*?)\s*;'
+COMBINATOR_DECL['full-combinator-id'] = '\s*{lc-ident-full}'
+COMBINATOR_DECL['opt-arg'] = '\\{{(?P<parameter>{var-ident}):(?P<type>{type-ident})\\}}'
+COMBINATOR_DECL['arg'] = r'\s{var-ident}:{var-ident}'
+COMBINATOR_DECL['result-type'] = r'=\s*(?P<result_type>.*?)\s*;'
+
