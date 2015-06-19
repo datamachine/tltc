@@ -29,14 +29,6 @@ class TLCombinator(metaclass=ABCMeta):
     def deserialize(self, bytes_io):
         raise NotImplemented
 
-
-class TLConstructor(TLCombinator):
-    pass
-
-
-class TLFunction(TLCombinator):
-    pass
-
 """
 Predefined identifer / types in TL. https://core.telegram.org/mtproto/TL-formal
 """
