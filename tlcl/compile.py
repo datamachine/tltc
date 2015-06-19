@@ -174,7 +174,7 @@ class TLSchema:
         print('ERROR:\t{}:\t{}'.format(matches, kwargs))
         return 'quit', {}
 
-    def generate_intermediate_objects(self):
+    def generate_ir(self):
         self.combinators = {}
         schema_iter = self.iter_prog.finditer(self.schema)
         kwargs = {'section': 'constructors'}
@@ -224,7 +224,7 @@ if __name__ == "__main__":
         schema = fp.read()
 
     tl_schema = TLSchema(schema)
-    tl_schema.generate_intermediate_objects()
+    tl_schema.generate_ir()
 
     #print('\n'.join([str(t) for t in tl_schema.types]))
 
