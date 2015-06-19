@@ -13,8 +13,9 @@ from .syntax.tlsyntax import TLSyntax
 from .ir.type import IRType
 from .ir.identifier import IRIdentifier
 from .ir.param import IRParameter
+from .ir.combinator import IRCombinator
 
-class TLCombinator:
+class _TLCombinator:
     def __init__(self, namespace, identifier, id):
         self.namespace = namespace
         self.identifier = identifier
@@ -31,12 +32,6 @@ class TLCombinator:
     def set_result_type(self, result_type):
         self.result_type = result_type
 
-class TLConstructor(TLCombinator):
-    pass
-
-class TLFunction(TLCombinator):
-    pass
-
 class TLSchema:
     def __init__(self, schema):
         self.schema = schema
@@ -50,7 +45,7 @@ class TLSchema:
 
     @property
     def constructors(self):
-        return [c for c_id, c in self.combinators.items() if type(c) is TLConstructor]
+        return [c for c_id, c in self.combinators.items() if c.kind == IRCombinator.CONSTRUCTOR]
 
     def constructors_with_type(self, namespace, identifer):
         return [c for c in self.constructors if c.result_type.namespace == namespace and c.result_type.identifier == identifier]
@@ -120,19 +115,20 @@ class TLSchema:
 
         combinator_namespace = groups['combinator_namespace']
         combinator_identifier = groups['combinator_identifier']
-        combinator_id = int(groups['combinator_id'], 16)
+        number = int(groups['combinator_id'], 16)
 
-        if combinator_id in self.combinators:
-            raise Exception('Combinator already exists with id: {}'.format(combinator_id))
+        if number in self.combinators:
+            raise Exception('Combinator already exists with id: {}'.format(number))
 
         if section not in ['functions', 'constructors']:
             return 'error', {'groups', groups}
 
-        combinator_cls = TLConstructor if section == 'constructors' else TLFunction
+        kind = IRCombinator.CONSTRUCTOR if section == 'constructors' else IRCombinator.FUNCTION
+        identifer = IRIdentifier(namespace=combinator_namespace, ident=combinator_identifier)
 
-        combinator = combinator_cls(combinator_namespace, combinator_identifier, combinator_id)
+        combinator = IRCombinator(kind, identifer, number=number)
 
-        self.combinators[combinator.id] = combinator
+        self.combinators[combinator.number] = combinator
         return 'combinator_optional_params', {'combinator': combinator, 'section':section}
 
     def _fsm_combinator_optional_params(self, groups, section, combinator):
