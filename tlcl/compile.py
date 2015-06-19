@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.4
 
-from .ir.schema import TLSchema
+from .ir.schema import IRSchema
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -17,7 +17,7 @@ if __name__ == "__main__":
     with open(args.source, 'r') as fp:
         schema = fp.read()
 
-    tl_schema = TLSchema(schema)
+    tl_schema = IRSchema(schema)
     tl_schema.generate_ir()
 
     #print('\n'.join([str(t) for t in tl_schema.types]))

@@ -9,7 +9,7 @@ from .identifier import IRIdentifier
 from .param import IRParameter
 from .combinator import IRCombinator
 
-class TLSchema:
+class IRSchema:
     def __init__(self, schema):
         self.schema = schema
         self._construct_iter_expressions()
