@@ -12,15 +12,7 @@ from pathlib import Path
 from .syntax.tlsyntax import TLSyntax
 from .ir.type import IRType
 from .ir.identifier import IRIdentifier
-
-class TLParameter:
-    def __init__(self, identifier, type_namespace, type_identifier):
-        self.identifier = identifier
-        self.type_namespace = type_namespace
-        self.type_identifier = type_identifier
-
-class TLOptionalParameter(TLParameter):
-    pass
+from .ir.param import IRParameter
 
 class TLCombinator:
     def __init__(self, namespace, identifier, id):
@@ -31,12 +23,9 @@ class TLCombinator:
         self.params = []
         self.result_type = None
 
-    def add_parameter(self, identifier, type_namespace, type_identifier):
-        self.params.append(TLParameter(identifier, type_namespace, type_identifier))
-
-    def add_optional_parameter(self, identifier, type_namespace, type_identifier):
-        self.optional_params.append(TLOptionalParameter(identifier, type_namespace, type_identifier))
-
+    def add_parameter(self, identifier, type_namespace, type_identifier, kind):
+        self.params.append(IRParameter(kind, identifier, type_identifier))
+        
     def set_result_type(self, result_type):
         self.result_type = result_type
 
@@ -156,7 +145,11 @@ class TLSchema:
             t = IRType(identifer)
             self.types[groups['optional_parameter_type']] = t
 
-        combinator.add_optional_parameter(groups['optional_parameter_identifier'], groups['optional_parameter_type_namespace'], groups['optional_parameter_type_identifier'])
+        combinator.add_parameter(
+            groups['optional_parameter_identifier'], 
+            groups['optional_parameter_type_namespace'], 
+            groups['optional_parameter_type_identifier'],
+            IRParameter.OPT_ARG)
 
         return 'combinator_optional_params', {'combinator':combinator, 'section':section}
 
@@ -171,7 +164,11 @@ class TLSchema:
             t = IRType(identifer)
             self.types[groups['parameter_type']] = t
 
-        combinator.add_parameter(groups['parameter_identifier'], groups['parameter_type_namespace'], groups['parameter_type_identifier'])
+        combinator.add_parameter(
+            groups['parameter_identifier'], 
+            groups['parameter_type_namespace'], 
+            groups['parameter_type_identifier'],
+            IRParameter.ARG)
 
         return 'combinator_params', {'combinator':combinator, 'section':section}
 
