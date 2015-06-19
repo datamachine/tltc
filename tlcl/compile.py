@@ -23,8 +23,10 @@ class TLCombinator:
         self.params = []
         self.result_type = None
 
-    def add_parameter(self, identifier, type_namespace, type_identifier, kind):
-        self.params.append(IRParameter(kind, identifier, type_identifier))
+    def add_parameter(self, param_ident, arg_namespace, arg_ident, kind):        
+        param_ident = IRIdentifier(ident=param_ident)
+        arg_type = IRType(IRIdentifier(namespace=arg_namespace, ident=arg_ident))
+        self.params.append(IRParameter(kind, param_ident, arg_type))
         
     def set_result_type(self, result_type):
         self.result_type = result_type
@@ -149,7 +151,7 @@ class TLSchema:
             groups['optional_parameter_identifier'], 
             groups['optional_parameter_type_namespace'], 
             groups['optional_parameter_type_identifier'],
-            IRParameter.OPT_ARG)
+            IRParameter.ARG)
 
         return 'combinator_optional_params', {'combinator':combinator, 'section':section}
 
