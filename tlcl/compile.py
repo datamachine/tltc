@@ -231,12 +231,10 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
     from pathlib import Path
     import sys
-    from .targets import Targets as t
-    from .targets import python34
-    print(t.available())
+    from .targets import Targets as targets
 
     parser = ArgumentParser(description='Translate a TL schema to the specified target language')
-    parser.add_argument('-t', '--target', required=True, choices=t.available(), help='supported targets: {}'.format(', '.join(t.available())))
+    parser.add_argument('-t', '--target', required=True, choices=targets.available(), help='supported targets: {}'.format(', '.join(targets.available())))
     parser.add_argument('source', nargs='?', help='TL source file')
     args = parser.parse_args(sys.argv[1:])
 
