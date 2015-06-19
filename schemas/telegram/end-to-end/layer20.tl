@@ -1,0 +1,5 @@
+decryptedMessageActionRequestKey#f3c9611b exchange_id:long g_a:bytes = DecryptedMessageAction;
+decryptedMessageActionAcceptKey#6fe1735b exchange_id:long g_b:bytes key_fingerprint:long = DecryptedMessageAction;
+decryptedMessageActionAbortKey#dd05ec6b exchange_id:long = DecryptedMessageAction;
+decryptedMessageActionCommitKey#ec2e0b9b exchange_id:long key_fingerprint:long = DecryptedMessageAction;
+decryptedMessageActionNoop#a82fdd63 = DecryptedMessageAction;
