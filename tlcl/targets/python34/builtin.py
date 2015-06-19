@@ -6,18 +6,18 @@ import struct
 """
 Types used as base classes for TL combinators and types
 """
-class TLType(metaclass=ABCMeta):
+class TLObject(metaclass=ABCMeta):
     @abstractmethod
     def serialize(self):
         raise NotImplemented
 
 
-class TLCombinator(metaclass=ABCMeta):
-    combinators = {}
+class Combinator(metaclass=ABCMeta):
+    _combinators = {}
 
     @staticmethod
     def add_combinator(combinator_type):
-        TLCombinator.combinators[combinator.number] = combinator_type
+        Combinator.combinators[combinator.number] = combinator_type
 
     @staticmethod
     @abstractmethod
@@ -286,7 +286,7 @@ class _Integral(numbers.Integral):
 """
 Int https://core.telegram.org/type/int
 """
-class Int(_Integral, TLType):
+class Int(_Integral, TLObject):
     _struct = struct.Struct('!i')
 
     def __init__(self, _int):
@@ -308,7 +308,7 @@ Int.register(int)
 """
 Long https://core.telegram.org/type/long
 """
-class Long(_Integral, TLType):        
+class Long(_Integral, TLObject):        
     _struct = struct.Struct('!q')
 
     def __init__(self, _long):
@@ -330,7 +330,7 @@ Long.register(int)
 """
 Bool https://core.telegram.org/type/bool
 """
-class Bool(_Integral, TLType):
+class Bool(_Integral, TLObject):
     _struct = struct.Struct('!q')
 
     def __init__(self, _bool):
@@ -349,7 +349,7 @@ class Bool(_Integral, TLType):
 
 Bool.register(bool)
 
-class Double(_Real, TLType):
+class Double(_Real, TLObject):
     _struct = struct.Struct('!d')
 
     def __init__(self, _double):
@@ -369,7 +369,7 @@ Double.register(float)
 
 """
 """
-class Vector(TLType):
+class Vector(TLObject):
     def __init__(self, vector_type):
         if not isinstance(vector_type, type):
             raise TypeError('vector_type must be a type')
