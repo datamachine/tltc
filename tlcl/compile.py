@@ -5,32 +5,11 @@ import re
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 
-
-
-
-
 from .syntax.tlsyntax import TLSyntax
 from .ir.type import IRType
 from .ir.identifier import IRIdentifier
 from .ir.param import IRParameter
 from .ir.combinator import IRCombinator
-
-class _TLCombinator:
-    def __init__(self, namespace, identifier, id):
-        self.namespace = namespace
-        self.identifier = identifier
-        self.id = id
-        self.optional_params = []
-        self.params = []
-        self.result_type = None
-
-    def add_parameter(self, param_ident, arg_namespace, arg_ident, kind):        
-        param_ident = IRIdentifier(ident=param_ident)
-        arg_type = IRType(IRIdentifier(namespace=arg_namespace, ident=arg_ident))
-        self.params.append(IRParameter(kind, param_ident, arg_type))
-        
-    def set_result_type(self, result_type):
-        self.result_type = result_type
 
 class TLSchema:
     def __init__(self, schema):
