@@ -11,7 +11,7 @@ from .combinator import IRCombinator
 
 class IRSchema:
     def __init__(self, schema):
-        self.schema = schema
+        self._schema = schema
         self._construct_iter_expressions()
         self.types = {}
         self.combinators = {}
@@ -174,7 +174,7 @@ class IRSchema:
 
     def generate_ir(self):
         self.combinators = {}
-        schema_iter = self.iter_prog.finditer(self.schema)
+        schema_iter = self.iter_prog.finditer(self._schema)
         kwargs = {'section': 'constructors'}
         state = 'combinators'
         for i in schema_iter:
