@@ -13,6 +13,21 @@ class TLObject(metaclass=ABCMeta):
     def serialize(self):
         raise NotImplemented
 
+class TLLayer:
+    _layers = {}
+
+    def __init__(self, number):
+        self.number = number
+        TLLayer.set_layer(number, self)
+
+    @staticmethod
+    def layer(number):
+        return TLLayers.get(number, None)
+
+    @staticmethod
+    def set_layer(number, layer):
+        TLLayers.set_layer(number, layer)
+
 class TLType(metaclass=ABCMeta):
     def __init__(self):
         self._combinators = {}
@@ -35,10 +50,11 @@ class Combinator(metaclass=ABCMeta):
         raise NotImplemented
 
 """
-_Integral utility base class used by Integral base type
+_TLIntegralType utility base class used by Integral base type
 """
-class _Integral(numbers.Integral, TLObject):
+class _TLIntegralType(TLType, numbers.Integral):
     def __init__(self, _data):
+        super().__init__()
         self._data = type(self)._cls(_data)
 
     def serialize(self):
@@ -163,7 +179,7 @@ class _Integral(numbers.Integral, TLObject):
 """
 BaseInt https://core.telegram.org/type/int
 """
-class BaseInt(_Integral):
+class BaseInt(_TLIntegralType):
     _cls = int
     _struct = struct.Struct('!i')
 
@@ -182,7 +198,7 @@ BaseInt.register(BaseInt._cls)
 """
 BaseLong https://core.telegram.org/type/long
 """
-class BaseLong(_Integral):
+class BaseLong(_TLIntegralType):
     _cls = int     
     _struct = struct.Struct('!q')
 
@@ -200,7 +216,7 @@ class BaseLong(_Integral):
 """
 BaseBool https://core.telegram.org/type/bool
 """
-class BaseBool(_Integral):
+class BaseBool(_TLIntegralType):
     _cls = bool
     _struct = struct.Struct('!i')
 
