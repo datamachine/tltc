@@ -42,15 +42,10 @@ class _Integral(numbers.Integral, TLObject):
         self._data = type(self)._cls(_data)
 
     def serialize(self):
-        return type(self)._cls._struct.pack(self._data)
+        return type(self)._struct.pack(self._data)
 
     def __bytes__(self):
         return self.serialize()
-
-    def __format__(self, format_spec):
-        if 'x' in format_spec or 'b' in format_spec:
-            return format(struct.unpack('<L', self.serialize())[0], format_spec)
-        return format(self._data, format_spec)
 
     """
     Abstract methods from numbers.Integral
@@ -170,19 +165,13 @@ BaseInt https://core.telegram.org/type/int
 """
 class BaseInt(_Integral):
     _cls = int
-    _struct = struct.Struct('!l')
+    _struct = struct.Struct('!i')
 
     def __init__(self, _int):
         super().__init__(_int)
 
-    def serialize(self):
-        return BaseInt._struct.pack(self._data)
-
     def __repr__(self):
         return 'BaseInt({:d})'.format(self._data)
-
-    def __bytes__(self):
-        return self.serialize()
 
     def __format__(self, format_spec):
         if 'x' in format_spec or 'b' in format_spec:
@@ -203,16 +192,17 @@ class BaseLong(_Integral):
     def __init__(self, _long):
         self._data = int(_long)
 
-    def serialize(obj):
-        return BaseLong._struct.pack(self._data)
-BaseLong.register(BaseLong._cls)
+    def __format__(self, format_spec):
+        if 'x' in format_spec or 'b' in format_spec:
+            return format(struct.unpack('<Q', self.serialize())[0], format_spec)
+        return format(self._data, format_spec)
 
 """
 BaseBool https://core.telegram.org/type/bool
 """
 class BaseBool(_Integral):
     _cls = bool
-    _struct = struct.Struct('!q')
+    _struct = struct.Struct('!i')
 
     def __init__(self, _bool):
         super().__init__(_bool)
