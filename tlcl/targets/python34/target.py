@@ -25,6 +25,8 @@ class Python34Target(Target):
         return Python34Type
 
     def translate(self):
+        for combinator in self.schema.combinators:
+            print(combinator)
         types = {}
         for name, ir_type in self.schema.types.items():
             if name in ['Vector t', 'Bool', 'Null']:
