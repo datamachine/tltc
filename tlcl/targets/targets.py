@@ -26,6 +26,11 @@ class Target(metaclass=ABCMeta):
 	def type_cls():
 		raise NotImplements
 
+	@staticmethod
+	@abstractmethod
+	def translator_cls():
+		raise NotImplements
+
 class _Targets:
 	def __init__(self):
 		self._targets = {}
