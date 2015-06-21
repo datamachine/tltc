@@ -246,8 +246,8 @@ class BaseString(TLType):
         self._data = str(data)
 
     def serialize(self):
-        _bytes = self._data.encode('utf-8')
-        length = len(_bytes)
+        data = self._data.encode('utf-8')
+        length = len(data)
 
         prefix = b''
         if length <= 253:
@@ -255,6 +255,32 @@ class BaseString(TLType):
         else:
             prefix = (0xFF000000 | L).to_bytes(4, byteorder='little')
 
-        suffix = int(0).to_bytes(4 - (len(prefix) + len(_bytes))%4, byteorder='little')
-        return prefix + _bytes + suffix
+        padding_length = 4 - (len(prefix) + len(data))%4
 
+        padding = int(0).to_bytes(padding_length, byteorder='little')
+
+        return prefix + data + padding
+
+"""
+BaseString https://core.telegram.org/type/string
+"""
+class BaseBytes(TLType):
+    def __init__(self, data):
+        self._data = bytes(data)
+
+    def serialize(self):
+        data = self._data
+        length = len(data)
+
+        prefix = b''
+        if length <= 253:
+            prefix = length.to_bytes(1, byteorder='little')
+        else:
+            prefix = (0xFF000000 | L).to_bytes(4, byteorder='little')
+
+
+        padding_length = 4 - (len(prefix) + len(data))%4
+
+        padding = int(0).to_bytes(padding_length, byteorder='little')
+
+        return prefix + data + padding
