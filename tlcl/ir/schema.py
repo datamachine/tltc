@@ -14,15 +14,6 @@ class IRSchema:
         self._schema = schema
         self._construct_iter_expressions()
         self.types = {}
-        self.combinators = {}
-
-    @property
-    def functions(self):
-        return [c for c_id, c in self.combinators.items() if type(c) is TLFunction]
-
-    @property
-    def constructors(self):
-        return [c for c_id, c in self.combinators.items() if c.kind == IRCombinator.CONSTRUCTOR]
 
     def constructors_with_type(self, namespace, identifer):
         return [c for c in self.constructors if c.result_type.namespace == namespace and c.result_type.identifier == identifier]
@@ -94,18 +85,14 @@ class IRSchema:
         ident = groups['combinator_identifier']
         number = int(groups['combinator_id'], 16)
 
-        if number in self.combinators:
-            raise Exception('Combinator already exists with id: {}'.format(number))
-
         if section not in ['functions', 'constructors']:
             return 'error', {'groups', groups}
 
         kind = IRCombinator.CONSTRUCTOR if section == 'constructors' else IRCombinator.FUNCTION
         identifer = IRIdentifier(IRIdentifier.COMBINATOR, namespace, ident)
 
-        combinator = IRCombinator(kind, identifer, number=number)
+        combinator = IRCombinator.create_new(kind, identifer, number)
 
-        self.combinators[combinator.number] = combinator
         return 'combinator_optional_params', {'combinator': combinator, 'section':section}
 
     def _fsm_combinator_optional_params(self, groups, section, combinator):
@@ -176,7 +163,6 @@ class IRSchema:
         return 'quit', {}
 
     def generate_ir(self):
-        self.combinators = {}
         schema_iter = self.iter_prog.finditer(self._schema)
         kwargs = {'section': 'constructors'}
         state = 'combinators'
