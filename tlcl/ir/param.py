@@ -11,3 +11,7 @@ class IRParameter:
         self.kind = IRParameter._IRParameterKind(kind)
         self.param_ident = param_ident
         self.arg_type = arg_type
+
+    def __repr__(self):
+        fmt='<IRParameter: kind={}, param_ident={}, arg_type={}>'
+        return fmt.format(self.kind, self.param_ident.full_ident, self.arg_type.identifier.full_ident)
