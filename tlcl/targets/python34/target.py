@@ -27,7 +27,7 @@ class Python34Target(Target):
     def translate(self):
         types = {}
         for name, ir_type in self.schema.types.items():
-            if name in ['Vector t', 'Bool']:
+            if name in ['Vector t', 'Bool', 'Null']:
                 print('skipping built-in type: "{}"'.format(name))
                 continue
 
