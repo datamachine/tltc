@@ -13,3 +13,6 @@ if __name__ == '__main__':
 
     b = Bytes(255)
     print(b.serialize())
+
+    _bool = Bool(True)
+    print('boolTrue:', _bool.serialize())

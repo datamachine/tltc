@@ -3,6 +3,8 @@ from abc import ABCMeta, abstractmethod
 import numbers
 from enum import Enum
 
+import zlib
+
 """
 Types used as base classes for TL combinators and types
 """
@@ -57,124 +59,125 @@ class Combinator(metaclass=ABCMeta):
 _TLIntegralType utility base class used by Integral base type
 """
 class _TLIntegralType(TLType, numbers.Integral):
-    def __init__(self, _data):
-        super().__init__()
-        self._data = type(self)._cls(_data)
-
     def __bytes__(self):
         return self.serialize()
+
+    @property
+    @abstractmethod
+    def data(self):
+        return self._data
 
     """
     Abstract methods from numbers.Integral
     """
     def __int__(self):
-        return self._data.__int__()
+        return self.data.__int__()
 
     def __pow__(self, exponent, modulus=None):
-        return self._data.__pow__(exponent, modulus)
+        return self.data.__pow__(exponent, modulus)
 
     def __lshift__(self, other):
-        return self._data.__lshift__(other)
+        return self.data.__lshift__(other)
 
     def __rlshift__(self, other):
-        return self._data.__rlshift__(other)
+        return self.data.__rlshift__(other)
 
     def __rshift__(self, other):
-        return self._data.__rshift__(other)
+        return self.data.__rshift__(other)
 
     def __rrshift__(self, other):
-        return self._data.__rrshift__(other)
+        return self.data.__rrshift__(other)
 
     def __and__(self, other):
-        return self._data.__and__(other)
+        return self.data.__and__(other)
 
     def __rand__(self, other):
-        return self._data.__rand__(other)
+        return self.data.__rand__(other)
 
     def __xor__(self, other):
-        return self._data.__xor__(other)
+        return self.data.__xor__(other)
 
     def __rxor__(self, other):
-        return self._data.__rxor__(other)
+        return self.data.__rxor__(other)
 
     def __or__(self, other):
-        return self._data.__or__(other)
+        return self.data.__or__(other)
 
     def __ror__(self, other):
-        return self._data.__ror__(other)
+        return self.data.__ror__(other)
 
     def __invert__(self):
-        return self._data.__invert__(other)
+        return self.data.__invert__(other)
 
     """
     Abstract methods from numbers.Real
     """        
     def __trunc__(self):
-        return self._data.__trunc__(other)
+        return self.data.__trunc__(other)
 
     def __floor__(self):
-        return self._data.__floor__(other)
+        return self.data.__floor__(other)
 
     def __ceil__(self):
-        return self._data.__ceil__(other)
+        return self.data.__ceil__(other)
 
     def __round__(self, ndigits=None):
-        return self._data.__round__(ndigits)
+        return self.data.__round__(ndigits)
 
     def __floordiv__(self, other):
-        return self._data.__floordiv__(other)
+        return self.data.__floordiv__(other)
 
     def __rfloordiv__(self, other):
-        return self._data.__rfloordiv__(other)
+        return self.data.__rfloordiv__(other)
         
     def __mod__(self, other):
-        return self._data.__mod__(other)
+        return self.data.__mod__(other)
         
     def __rmod__(self, other):
-        return self._data.__rmod__(other)
+        return self.data.__rmod__(other)
         
     def __lt__(self, other):
-        return self._data.__lt__(other)
+        return self.data.__lt__(other)
         
     def __le__(self, other):
-        return self._data.__le__(other)
+        return self.data.__le__(other)
 
 
     """
     Abstract methods from numbers.Complex
     """
     def __add__(self, other):
-        return self._data.__add__(other)
+        return self.data.__add__(other)
 
     def __radd__(self, other):
-        return self._data.__radd__(other)
+        return self.data.__radd__(other)
 
     def __neg__(self):
-        return self._data.__neg__()
+        return self.data.__neg__()
 
     def __pos__(self):
-        return self._data.__pos__()
+        return self.data.__pos__()
 
     def __mul__(self, other):
-        return self._data.__mul__(other)
+        return self.data.__mul__(other)
 
     def __rmul__(self, other):
-        return self._data.__rmul__(other)
+        return self.data.__rmul__(other)
 
     def __truediv__(self, other):
-        return self._data.__truediv__(other)
+        return self.data.__truediv__(other)
 
     def __rtruediv__(self, other):
-        return self._data.__rtruediv__(other)
+        return self.data.__rtruediv__(other)
 
     def __rpow__(self, base):
-        return self._data.__rpow__(base)
+        return self.data.__rpow__(base)
 
     def __abs__(self):
-        return self._data.__abs__()
+        return self.data.__abs__()
 
     def __eq__(self, other):
-        return self._data.__eq__(other)
+        return self.data.__eq__(other)
 
 
 """
@@ -184,18 +187,22 @@ class Int(_TLIntegralType):
     _cls = int
 
     def __init__(self, _int):
-        super().__init__(_int)
+        self._int = Int._cls(_int)
+
+    @property
+    def data(self):
+        return self._int
 
     def __repr__(self):
-        return 'Int({:d})'.format(self._data)
+        return 'Int({:d})'.format(self._int)
 
     def serialize(self):
-        return self._data.to_bytes(4, byteorder='little')
+        return self._int.to_bytes(4, byteorder='little')
 
     def __format__(self, format_spec):
         if 'x' in format_spec or 'b' in format_spec:
             return format(int.from_bytes(self.serialize(), byteorder='big'), format_spec)
-        return format(self._data, format_spec)
+        return format(self._int, format_spec)
 Int.register(Int._cls)
 
 """
@@ -205,15 +212,19 @@ class Long(_TLIntegralType):
     _cls = int     
 
     def __init__(self, _long):
-        super().__init__(_long)
+        self._long = Long._cls(_long)
+
+    @property
+    def data(self):
+        return self._long
 
     def serialize(self):
-        return self._data.to_bytes(8, byteorder='little')
+        return self._long.to_bytes(8, byteorder='little')
 
     def __format__(self, format_spec):
         if 'x' in format_spec or 'b' in format_spec:
             return format(int.from_bytes(self.serialize()[0], byteorder='big'), format_spec)
-        return format(self._data, format_spec)
+        return format(self._long, format_spec)
 
 """
 Bool https://core.telegram.org/type/bool
@@ -221,11 +232,22 @@ Bool https://core.telegram.org/type/bool
 class Bool(_TLIntegralType):
     _cls = bool
 
+    _true = zlib.crc32('boolTrue = Bool'.encode())
+    _false = zlib.crc32('boolFalse = Bool'.encode()) 
+
     def __init__(self, _bool):
-        super().__init__(_bool)
+        self._bool = Bool._cls(_bool)
+
+    @property
+    def data(self):
+        return self._bool
 
     def serialize(self):
-        return self._data.to_bytes(4, byteorder='little')
+        if self._bool:
+            return self._true.to_bytes(4, byteorder='little')
+        else:
+            return self._false.to_bytes(4, byteorder='little')
+
 
 Bool.register(Bool._cls)
 
