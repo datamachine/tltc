@@ -90,8 +90,8 @@ class IRSchema:
         if not groups['combinator']:
             return 'error', {'groups': groups}
 
-        combinator_namespace = groups['combinator_namespace']
-        combinator_identifier = groups['combinator_identifier']
+        namespace = groups['combinator_namespace']
+        ident = groups['combinator_identifier']
         number = int(groups['combinator_id'], 16)
 
         if number in self.combinators:
@@ -101,7 +101,7 @@ class IRSchema:
             return 'error', {'groups', groups}
 
         kind = IRCombinator.CONSTRUCTOR if section == 'constructors' else IRCombinator.FUNCTION
-        identifer = IRIdentifier(IRIdentifier.COMBINATOR, combinator_namespace, combinator_identifier)
+        identifer = IRIdentifier(IRIdentifier.COMBINATOR, namespace, ident)
 
         combinator = IRCombinator(kind, identifer, number=number)
 
@@ -112,20 +112,12 @@ class IRSchema:
         if not groups['optional_parameter']:
             return self._fsm_combinator_params(groups, section, combinator)
 
+        param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, groups['optional_parameter_identifier'])
+        arg_ident = IRIdentifier(IRIdentifier.TYPE, groups['optional_parameter_type_namespace'], groups['optional_parameter_type_identifier'])
+        arg_type = IRType(arg_ident)
+        param = IRParameter(IRParameter.ARG_NAT, param_ident, arg_type)
 
-        t = self.types.get(groups['optional_parameter_type'], None)
-        if not t:
-            identifer = IRIdentifier(IRIdentifier.PARAMETER,
-                                     groups['optional_parameter_type_namespace'], 
-                                     groups['optional_parameter_type_identifier'])
-            t = IRType(identifer)
-            self.types[groups['optional_parameter_type']] = t
-
-        combinator.add_parameter(
-            groups['optional_parameter_identifier'], 
-            groups['optional_parameter_type_namespace'], 
-            groups['optional_parameter_type_identifier'],
-            IRParameter.ARG)
+        combinator.add_parameter(param)
 
         return 'combinator_optional_params', {'combinator':combinator, 'section':section}
 
@@ -133,19 +125,27 @@ class IRSchema:
         if not groups['parameter']:
             return self._fsm_combinator_result_type(groups, section, combinator)
 
-        t = self.types.get(groups['parameter_type'], None)
-        if not t:
-            identifer = IRIdentifier(IRIdentifier.PARAMETER,
-                                     groups['parameter_type_namespace'], 
-                                     groups['parameter_type_namespace'])
-            t = IRType(identifer)
-            self.types[groups['parameter_type']] = t
 
-        combinator.add_parameter(
-            groups['parameter_identifier'], 
-            groups['parameter_type_namespace'], 
-            groups['parameter_type_identifier'],
-            IRParameter.ARG)
+        t = None
+        param = None
+
+        if groups['parameter_nat']:
+            param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, '#')
+            arg_ident = IRIdentifier(IRIdentifier.TYPE, None, '#')
+            arg_type = IRType(arg_ident)
+            param = IRParameter(IRParameter.ARG_NAT, param_ident, arg_type)
+        elif groups['parameter_multiplicity']:
+            param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, 't')
+            arg_ident = IRIdentifier(IRIdentifier.TYPE, None, 't')
+            arg_type = IRType(arg_ident)
+            param = IRParameter(IRParameter.ARG_NAT, param_ident, arg_type)
+        else:
+            param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, groups['parameter_identifier'])
+            arg_ident = IRIdentifier(IRIdentifier.TYPE, groups['parameter_type_namespace'], groups['parameter_type_identifier'])
+            arg_type = IRType(arg_ident)
+            param = IRParameter(IRParameter.ARG_NAT, param_ident, arg_type)
+
+        combinator.add_parameter(param)
 
         return 'combinator_params', {'combinator':combinator, 'section':section}
 

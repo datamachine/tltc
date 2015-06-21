@@ -8,6 +8,7 @@ class IRIdentifier:
     TYPE = _IdentifierKind.TYPE
 
     def __init__(self, kind, namespace, ident):
+        self.kind = IRIdentifier._IdentifierKind(kind)
         self.namespace = namespace
         self.ident = ident
         if namespace is None:
