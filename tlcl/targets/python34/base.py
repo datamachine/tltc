@@ -225,6 +225,7 @@ class BaseBool(_TLIntegralType):
 
     def serialize(obj):
         return BaseBool._struct.pack(self._data)
+
 BaseBool.register(BaseBool._cls)
 
 class Double(numbers.Real, TLObject):
@@ -249,7 +250,7 @@ class BaseString(TLType):
         return self._str.encode('utf-8')
 
     def serialize(self):
-        result = bytearray(0)
+        result = bytearray()
 
         str_bytes = bytes(self)
 
@@ -284,7 +285,7 @@ class BaseBytes(TLType):
         return self._bytes
 
     def serialize(self):
-        result = bytearray(0)
+        result = bytearray()
 
         length = len(self._bytes)
         if length <= 253:
