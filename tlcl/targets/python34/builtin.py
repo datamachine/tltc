@@ -1,18 +1,18 @@
-from .base import TLObject
+from .base import TLType
 
 """
 https://core.telegram.org/type/vector_t
 https://core.telegram.org/constructor/vector
 """
-class Vector(TLObject):
-    def __init__(self, vector_type):
-        if not isinstance(vector_type, type):
-            raise TypeError('vector_type must be a type')
-        self._type = vector_type
+class Vector:
+    def __init__(self, cls):
+        if not isinstance(cls, type):
+            raise TypeError('cls must be a type')
+        self._cls = cls
         self._data = []
 
     def serialize(self):
-        result = b''
-        for d in self._data:
+        result = bytearray()
+        for data in self._data:
             result += d.serialize()
         return result

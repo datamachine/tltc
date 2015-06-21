@@ -1,9 +1,9 @@
 
 from abc import ABCMeta, abstractmethod
 import numbers
-import struct
 
 from functools import partial
+
 
 """
 Types used as base classes for TL combinators and types
@@ -56,9 +56,6 @@ class _TLIntegralType(TLType, numbers.Integral):
     def __init__(self, _data):
         super().__init__()
         self._data = type(self)._cls(_data)
-
-    def serialize(self):
-        return type(self)._struct.pack(self._data)
 
     def __bytes__(self):
         return self.serialize()
@@ -181,7 +178,6 @@ Int https://core.telegram.org/type/int
 """
 class Int(_TLIntegralType):
     _cls = int
-    _struct = struct.Struct('!i')
 
     def __init__(self, _int):
         super().__init__(_int)
@@ -189,9 +185,12 @@ class Int(_TLIntegralType):
     def __repr__(self):
         return 'Int({:d})'.format(self._data)
 
+    def serialize(self):
+        return self._data.to_bytes(4, byteorder='little')
+
     def __format__(self, format_spec):
         if 'x' in format_spec or 'b' in format_spec:
-            return format(struct.unpack('<L', self.serialize())[0], format_spec)
+            return format(int.from_bytes(self.serialize(), byteorder='big'), format_spec)
         return format(self._data, format_spec)
 Int.register(Int._cls)
 
@@ -200,17 +199,16 @@ Long https://core.telegram.org/type/long
 """
 class Long(_TLIntegralType):
     _cls = int     
-    _struct = struct.Struct('!q')
 
     def __init__(self, _long):
         super().__init__(_long)
 
-    def __init__(self, _long):
-        self._data = int(_long)
+    def serialize(self):
+        return self._data.to_bytes(8, byteorder='little')
 
     def __format__(self, format_spec):
         if 'x' in format_spec or 'b' in format_spec:
-            return format(struct.unpack('<Q', self.serialize())[0], format_spec)
+            return format(int.from_bytes(self.serialize()[0], byteorder='big'), format_spec)
         return format(self._data, format_spec)
 
 """
@@ -218,24 +216,21 @@ Bool https://core.telegram.org/type/bool
 """
 class Bool(_TLIntegralType):
     _cls = bool
-    _struct = struct.Struct('!i')
 
     def __init__(self, _bool):
         super().__init__(_bool)
 
-    def serialize(obj):
-        return Bool._struct.pack(self._data)
+    def serialize(self):
+        return self._data.to_bytes(4, byteorder='little')
 
 Bool.register(Bool._cls)
 
 class Double(numbers.Real, TLObject):
-    _struct = struct.Struct('!d')
-
     def __init__(self, _double):
         super().__init__(_double)
 
     def serialize(self):
-        return Double._struct.pack(self._data)
+            return format(int.from_bytes(self.serialize()[0], byteorder='big'), format_spec)
 Double.register(float)
 
 
