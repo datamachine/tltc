@@ -236,3 +236,25 @@ class Double(numbers.Real, TLObject):
     def serialize(self):
         return Double._struct.pack(self._data)
 Double.register(float)
+
+
+"""
+BaseString https://core.telegram.org/type/string
+"""
+class BaseString(TLType):
+    def __init__(self, data):
+        self._data = str(data)
+
+    def serialize(self):
+        _bytes = self._data.encode('utf-8')
+        length = len(_bytes)
+
+        prefix = b''
+        if length <= 253:
+            prefix = length.to_bytes(1, byteorder='little')
+        else:
+            prefix = (0xFF000000 | L).to_bytes(4, byteorder='little')
+
+        suffix = int(0).to_bytes(4 - (len(prefix) + len(_bytes))%4, byteorder='little')
+        return prefix + _bytes + suffix
+

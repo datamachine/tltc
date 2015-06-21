@@ -7,3 +7,6 @@ if __name__ == '__main__':
     i = BaseInt(0x1020abcd)
     print('{:x}'.format(i))
     print(repr(i))
+
+    s = BaseString('test')
+    print(s.serialize())
