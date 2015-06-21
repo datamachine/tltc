@@ -4,32 +4,27 @@ class Target(metaclass=ABCMeta):
 	@staticmethod
 	@abstractmethod
 	def name():
-		raise NotImplements
+		raise NotImplemented
 
 	@staticmethod
 	@abstractmethod
 	def description():
-		raise NotImplements
+		raise NotImplemented
 
 	@staticmethod
 	@abstractmethod
 	def combinator_cls():
-		raise NotImplements
+		raise NotImplemented
 
 	@staticmethod
 	@abstractmethod
 	def param_cls():
-		raise NotImplements
+		raise NotImplemented
 
 	@staticmethod
 	@abstractmethod
 	def type_cls():
-		raise NotImplements
-
-	@staticmethod
-	@abstractmethod
-	def translator_cls():
-		raise NotImplements
+		raise NotImplemented
 
 class _Targets:
 	def __init__(self):
