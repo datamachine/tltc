@@ -42,7 +42,6 @@ class IRCombinator:
         self._params.append(param)
         
     def set_result_type(self, result_type):
-        print(self)
         result_type.constructors.append(self)
         self._result_type = result_type
 

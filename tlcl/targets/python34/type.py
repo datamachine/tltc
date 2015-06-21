@@ -14,12 +14,7 @@ class Python34Type:
     def __init__(self, target, ir_type):
         self.target = target
         self.ir_type = ir_type
-        self.outpath = Path('out/python34/types.py')
-
-        self._preprocess_identifier()
-        self._preprocess_params()
-        self._preprocess_init_signatures()
-        self.member_inits = []
+        self.constructors = OrderedDict()
 
     def _preprocess_params(self):
         self.param_data = []

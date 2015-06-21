@@ -1,11 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
 class Target(metaclass=ABCMeta):
-	__slots__ = ('combinators', 'types')
-	def __init__(self, schema):
-		super().__init__()
-		self.schema = schema
-
 	@abstractmethod
 	def translate(self):
 		print('test')

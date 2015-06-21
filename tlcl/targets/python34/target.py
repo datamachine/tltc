@@ -2,8 +2,34 @@ from .combinator import Python34Combinator
 from .param import Python34Parameter
 from .type import Python34Type
 from ..targets import Target
+from collections import OrderedDict
+
+BUILTIN_COMBINATORS = ['vector', 'int', 'long', 'double', 'bool', 'string', 'bytes']
 
 class Python34Target(Target):
+    def __init__(self, schema):
+        self.schema = schema
+        self.combinators = OrderedDict()
+        self.types = OrderedDict()
+        self.preprocess()
+
+    def preprocess(self):
+        for name, t in self.schema.types.items():
+            self.types[name] = Python34Type(self, t)
+
+        for name, c in self.schema.combinators_by_identifier.items():
+            if name in BUILTIN_COMBINATORS:
+                print('Skipping built-in type "{}"'.format(name))
+                continue
+            combinator = Python34Combinator(self, c)
+            self.combinators[c.identifier.full_ident] = combinator
+
+        for name, c in self.combinators.items():
+            print(c.definition())
+
+        for n, t in self.types.items():
+            print(t.constructors)
+
     @staticmethod
     def name():
         return 'Python3.4'
@@ -25,23 +51,4 @@ class Python34Target(Target):
         return Python34Type
 
     def translate(self):
-        for combinator in self.schema.combinators:
-            print(combinator)
-        types = {}
-        for name, ir_type in self.schema.types.items():
-            if name in ['Vector t', 'Bool', 'Null']:
-                print('skipping built-in type: "{}"'.format(name))
-                continue
-
-            t = Python34Type(self, ir_type)
-            types[ir_type.identifier.full_ident] = t
-
-        for name, t in types.items():
-            t.preprocess_member_inits(types)
-
-        for name, t in types.items():
-            print('{:type_definition}'.format(t))
-
-
-        #for name, t in types.items():
-        #    print(t.definition(validate=False))
+        pass

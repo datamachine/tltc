@@ -1,39 +1,55 @@
-lscombinator_template="""
-class {identifier}({base_class}):
-    id = {hex_id}
+from collections import OrderedDict
+from inspect import Signature, Parameter
+from .param import Python34Parameter
 
-    @staticmethod
-    def new({params}):
-        return {result_type_identifer}({type_init_args})
-
-    @staticmethod
-    def serialize(obj):
-        return {serialize}
+template="""
+class {{identifier}}(TLCombinator):
+    _number = {{number}}
 
     @staticmethod
     def deserialize(io_bytes):
-        return {identifier}.new(...)
+        return {{identifier}}.new(...)
 """
 
 class Python34Combinator:
-    __slots__ = ['namespace_ident', 'ident', 'optargs', 'args', 'result_type']
+    def __init__(self, target, ir_combinator):
+        self.target = target
+        self._ir_combinator = ir_combinator
+        self._params = None
+        self._set_result_type()
 
+    def _set_result_type(self):
+        result = self._ir_combinator.result_type
+        result_type = self.target.types[result.identifier.full_ident]
+        result_type.constructors[self._ir_combinator.identifier.full_ident] = self
+        self._result_type = result_type
+
+    @property
     def identifier(self):
-        return self.combinator.identifier
+        return self._ir_combinator.identifier.full_ident
 
-    def declaration(self):
-        return None
+    @property
+    def number(self):
+        return self._ir_combinator.number
+
+    @property
+    def params(self):
+        if self._params is not None:
+            return self._params
+
+        self._params = OrderedDict()
+        for ir_param in self._ir_combinator.params:
+            param = Python34Parameter(self.target, ir_param)
+            self._params[ir_param.param_ident.full_ident] = param
+
+        return self._params
+
+    @property
+    def result_type(self):
+        return self._result_type
 
     def definition(self):
-        param_identifiers = [p.identifier() for p in self.params if p.identifier()]
-        params = ', '.join(param_identifiers)
-        type_init_args = ', '.join(['{}.id'.format(self.identifier)] + param_identifiers)
-        serialize = ' + '.join(['struct.pack(\'!i\', id)'] + ['{}.serialize()'.format(p) for p in param_identifiers])
-        return Python3Translator.combinator_template.format(
-            identifier=self.identifier,
-            base_class='TLConstructor',
-            hex_id=self.id,
-            params=params,
-            result_type_identifer=self.result_type.identifier,
-            type_init_args=type_init_args,
-            serialize=serialize)
+        return template
+
+    def __str__(self):
+        return '{}#{:x}'.format(self.identifier, self.number)

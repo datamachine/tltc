@@ -89,8 +89,7 @@ class IRSchema:
 
         self.combinators_by_number[number] = combinator
         self.combinators_by_identifier[identifier.full_ident] = combinator
-        self.combinators.append(combinator)
-
+       
         return combinator
 
     def create_new_type(self, namespace, ident):
