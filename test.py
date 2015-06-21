@@ -10,3 +10,6 @@ if __name__ == '__main__':
 
     s = BaseString('test')
     print(s.serialize())
+
+    b = BaseBytes(255)
+    print(b.serialize())

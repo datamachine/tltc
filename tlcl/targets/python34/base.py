@@ -243,44 +243,58 @@ BaseString https://core.telegram.org/type/string
 """
 class BaseString(TLType):
     def __init__(self, data):
-        self._data = str(data)
+        self._str = str(data)
+
+    def __bytes__(self):
+        return self._str.encode('utf-8')
 
     def serialize(self):
-        data = self._data.encode('utf-8')
-        length = len(data)
+        result = bytearray(0)
 
-        prefix = b''
+        str_bytes = bytes(self)
+
+        length = len(str_bytes)
         if length <= 253:
-            prefix = length.to_bytes(1, byteorder='little')
+            result += length.to_bytes(1, byteorder='little')
         else:
-            prefix = (0xFF000000 | L).to_bytes(4, byteorder='little')
+            result += int(254).to_bytes(1, byteorder='little')
+            result += length.to_bytes(3, byteorder='little')
 
-        padding_length = 4 - (len(prefix) + len(data))%4
+        result += str_bytes
+        
+        result += bytes(4-len(result)%4)
 
-        padding = int(0).to_bytes(padding_length, byteorder='little')
-
-        return prefix + data + padding
+        return bytes(result)
 
 """
 BaseString https://core.telegram.org/type/string
 """
 class BaseBytes(TLType):
-    def __init__(self, data):
-        self._data = bytes(data)
+    def __init__(self, source, encoding=None, errors=None):
+        if encoding is None and errors is None:
+            self._bytes = bytes(source)
+        elif encoding is None:
+            self._bytes = bytes(source, errors=errors)
+        elif errors is None:
+            self._bytes = bytes(source, encoding=encoding)
+        else:
+            self._bytes = bytes(source, encoding=encoding, errors=errors)
+
+    def __bytes__(self):
+        return self._bytes
 
     def serialize(self):
-        data = self._data
-        length = len(data)
+        result = bytearray(0)
 
-        prefix = b''
+        length = len(self._bytes)
         if length <= 253:
-            prefix = length.to_bytes(1, byteorder='little')
+            result += length.to_bytes(1, byteorder='little')
         else:
-            prefix = (0xFF000000 | L).to_bytes(4, byteorder='little')
+            result += int(254).to_bytes(1, byteorder='little')
+            result += length.to_bytes(3, byteorder='little')
+        
+        result += self._bytes
 
+        result += bytes(4-len(result)%4)
 
-        padding_length = 4 - (len(prefix) + len(data))%4
-
-        padding = int(0).to_bytes(padding_length, byteorder='little')
-
-        return prefix + data + padding
+        return bytes(result)
