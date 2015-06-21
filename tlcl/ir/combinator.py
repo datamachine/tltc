@@ -6,9 +6,6 @@ from .param import IRParameter
 from .type import IRType
 
 class IRCombinator:
-    _combinators_by_identifier = OrderedDict()
-    _combinators_by_number = OrderedDict()
-
     _IRCombinatorKind = Enum('IRCombinatorKind', ['CONSTRUCTOR', 'FUNCTION'])
 
     CONSTRUCTOR = _IRCombinatorKind.CONSTRUCTOR
@@ -20,20 +17,6 @@ class IRCombinator:
         self._number = number
         self._params = params
         self._result_type = result_type
-
-    @staticmethod
-    def create_new(kind, identifier, number):
-        if identifier.full_ident in IRCombinator._combinators_by_identifier:
-            raise Exception('Combinator with identifier already exists: \'{:x}\''.format(identifier.full_ident))
-
-        if number in IRCombinator._combinators_by_number:
-            raise Exception('Combinator with number already exists: \'{:x}\''.format(number))
-
-        combinator = IRCombinator(kind, identifier, number)
-
-        IRCombinator._combinators_by_number[number] = combinator
-        IRCombinator._combinators_by_identifier[identifier.full_ident] = combinator
-        return combinator
 
     @property
     def kind(self):

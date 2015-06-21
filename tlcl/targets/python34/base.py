@@ -251,7 +251,8 @@ class Bool(_TLIntegralType):
         else:
             return self._false.to_bytes(4, byteorder='little')
 
-
+    def pseudo_serialize(self):
+        return '{:#x}'.format(self._true if self._bool else self._false)
 Bool.register(Bool._cls)
 
 class Double(numbers.Real, TLObject):
@@ -260,6 +261,7 @@ class Double(numbers.Real, TLObject):
 
     def serialize(self):
             return format(int.from_bytes(self.serialize()[0], byteorder='big'), format_spec)
+
 Double.register(float)
 
 

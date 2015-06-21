@@ -13,3 +13,7 @@ if __name__ == '__main__':
 
     _bool = Bool(True)
     print('boolTrue:', _bool.serialize())
+
+    v = Vector(Bool, [True, False, True])
+    print(v.serialize())
+    print(v.pseudo_serialize())

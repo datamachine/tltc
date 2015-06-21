@@ -1,3 +1,5 @@
+from pathlib import Path
+
 type_template="""
 class {identifier}(TLType):
     def __init__({param_list}):
@@ -5,23 +7,19 @@ class {identifier}(TLType):
 """
 
 class Python34Type:
-    def identifier(self):
-        return self.identifier
+    def __init__(self, schema, ir_type):
+        self.schema = schema
+        self.ir_type = ir_type
+        self.outpath = Path('out/python34/types.py')
 
-    def declaration(self):
-        return self.identifier
+        self.identifier = 'raise NotImplemented'
+        self.param_list = 'raise NotImplemented'
+        self.param_inits = 'raise NotImplemented'
+
+    def preprocess(self):
+        ident = self.ir_type.identifier
+        if ident.full_ident.isidentifier():
+            self.identifier = ident.full_ident
 
     def definition(self):
-        member_vars = []
-        for c in self.constructors:
-            member_vars += [p.identifier() for p in c.params if p.identifier() and p.identifier() not in member_vars]
-        if not member_vars:
-            member_vars = ['combinator_id']
-        param_list = ', '.join(['self'] + member_vars)
-        param_inits = '\n'.join([''] + ['        self.{0} = {0}'.format(m) for m in member_vars])
-        if not param_inits:
-            param_inits = 'pass'
-        return Python3Translator.type_template.format(
-            identifier=self.identifier,
-            param_list=param_list,
-            param_inits=param_inits)
+        return type_template.format(**self.__dict__)

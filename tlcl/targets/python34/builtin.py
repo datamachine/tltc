@@ -5,14 +5,17 @@ https://core.telegram.org/type/vector_t
 https://core.telegram.org/constructor/vector
 """
 class Vector:
-    def __init__(self, cls):
-        if not isinstance(cls, type):
-            raise TypeError('cls must be a type')
-        self._cls = cls
-        self._data = []
+    def __init__(self, tl_type, data):
+        self._tl_type = tl_type
+        self._data = [tl_type(d) for d in data]
 
     def serialize(self):
         result = bytearray()
         for data in self._data:
-            result += d.serialize()
+            result += data.serialize()
+        return bytes(result)
+
+    def pseudo_serialize(self):
+        result = ' '.join([data.pseudo_serialize() for data in self._data])
         return result
+

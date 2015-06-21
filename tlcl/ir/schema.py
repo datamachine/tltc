@@ -9,14 +9,16 @@ from .identifier import IRIdentifier
 from .param import IRParameter
 from .combinator import IRCombinator
 
+from collections import OrderedDict
+
 class IRSchema:
     def __init__(self, schema):
         self._schema = schema
         self._construct_iter_expressions()
-        self.types = {}
-
-    def constructors_with_type(self, namespace, identifer):
-        return [c for c in self.constructors if c.result_type.namespace == namespace and c.result_type.identifier == identifier]
+        self.types = OrderedDict()
+        self.combinators_by_number = OrderedDict()
+        self.combinators_by_identifier = OrderedDict()
+        self.combinators = []
 
     def _construct_iter_expressions(self):
         tokens = [
@@ -74,6 +76,30 @@ class IRSchema:
         self.iter_expr = '(?:{})'.format('|'.join(tokens))
         self.iter_prog = re.compile(self.iter_expr)
 
+    def create_new_combinator(self, kind, namespace, ident, number):
+        identifier = IRIdentifier(IRIdentifier.COMBINATOR, namespace, ident)
+
+        if identifier.full_ident in self.combinators_by_identifier:
+            raise Exception('Combinator with identifier already exists: \'{:x}\''.format(identifier.full_ident))
+
+        if number in self.combinators_by_number:
+            raise Exception('Combinator with number already exists: \'{:x}\''.format(number))
+
+        combinator = IRCombinator(kind, identifier, number)
+
+        self.combinators_by_number[number] = combinator
+        self.combinators_by_identifier[identifier.full_ident] = combinator
+        self.combinators.append(combinator)
+
+        return combinator
+
+    def create_new_type(self, namespace, ident):
+        identifier = IRIdentifier(IRIdentifier.TYPE, namespace, ident)
+        ir_type = IRType(identifier)
+        self.types[identifier.full_ident] = ir_type
+        return ir_type
+
+
     def _fsm_combinators(self, groups, section):
         if section == 'constructors' and groups['start_functions']:
             return 'combinators', {'section':'functions'}
@@ -82,16 +108,15 @@ class IRSchema:
             return 'error', {'groups': groups}
 
         namespace = groups['combinator_namespace']
-        ident = groups['combinator_identifier']
+        identifier = groups['combinator_identifier']
         number = int(groups['combinator_id'], 16)
 
         if section not in ['functions', 'constructors']:
             return 'error', {'groups', groups}
 
         kind = IRCombinator.CONSTRUCTOR if section == 'constructors' else IRCombinator.FUNCTION
-        identifer = IRIdentifier(IRIdentifier.COMBINATOR, namespace, ident)
 
-        combinator = IRCombinator.create_new(kind, identifer, number)
+        combinator = self.create_new_combinator(kind, namespace, identifier, number)
 
         return 'combinator_optional_params', {'combinator': combinator, 'section':section}
 
@@ -141,12 +166,11 @@ class IRSchema:
             return 'error', {'groups':groups}
 
         t = self.types.get(groups['combinator_result_type'], None)
-        if not t:
-            identifer = IRIdentifier(IRIdentifier.TYPE,
-                                     groups['combinator_result_type_namespace'], 
-                                     groups['combinator_result_type_identifier'])
-            t = IRType(identifer)
-            self.types[groups['combinator_result_type']] = t
+        if t is None:
+            namespace = groups['combinator_result_type_namespace']
+            ident = groups['combinator_result_type_identifier']
+            t = self.create_new_type(namespace, ident)
+
         combinator.set_result_type(t)
 
         return 'combinator_end', {'section':section}
@@ -162,8 +186,8 @@ class IRSchema:
         print('ERROR:\t{}:\t{}'.format(matches, kwargs))
         return 'quit', {}
 
-    def print_combinators_by_number(self, func=repr):
-        for key, val in IRCombinator._combinators_by_number.items():
+    def print_combinators(self, func=repr):
+        for key, val in self.combinators_by_number.items():
             print('{}'.format(func(val)))
 
     def generate_ir(self):
@@ -176,5 +200,4 @@ class IRSchema:
 
             if state == 'quit':
                 return _fsm_error(i, kwargs)
-        self.print_combinators_by_number()
 
