@@ -177,9 +177,9 @@ class _TLIntegralType(TLType, numbers.Integral):
 
 
 """
-BaseInt https://core.telegram.org/type/int
+Int https://core.telegram.org/type/int
 """
-class BaseInt(_TLIntegralType):
+class Int(_TLIntegralType):
     _cls = int
     _struct = struct.Struct('!i')
 
@@ -187,18 +187,18 @@ class BaseInt(_TLIntegralType):
         super().__init__(_int)
 
     def __repr__(self):
-        return 'BaseInt({:d})'.format(self._data)
+        return 'Int({:d})'.format(self._data)
 
     def __format__(self, format_spec):
         if 'x' in format_spec or 'b' in format_spec:
             return format(struct.unpack('<L', self.serialize())[0], format_spec)
         return format(self._data, format_spec)
-BaseInt.register(BaseInt._cls)
+Int.register(Int._cls)
 
 """
-BaseLong https://core.telegram.org/type/long
+Long https://core.telegram.org/type/long
 """
-class BaseLong(_TLIntegralType):
+class Long(_TLIntegralType):
     _cls = int     
     _struct = struct.Struct('!q')
 
@@ -214,9 +214,9 @@ class BaseLong(_TLIntegralType):
         return format(self._data, format_spec)
 
 """
-BaseBool https://core.telegram.org/type/bool
+Bool https://core.telegram.org/type/bool
 """
-class BaseBool(_TLIntegralType):
+class Bool(_TLIntegralType):
     _cls = bool
     _struct = struct.Struct('!i')
 
@@ -224,9 +224,9 @@ class BaseBool(_TLIntegralType):
         super().__init__(_bool)
 
     def serialize(obj):
-        return BaseBool._struct.pack(self._data)
+        return Bool._struct.pack(self._data)
 
-BaseBool.register(BaseBool._cls)
+Bool.register(Bool._cls)
 
 class Double(numbers.Real, TLObject):
     _struct = struct.Struct('!d')
@@ -240,9 +240,9 @@ Double.register(float)
 
 
 """
-BaseString https://core.telegram.org/type/string
+String https://core.telegram.org/type/string
 """
-class BaseString(TLType):
+class String(TLType):
     def __init__(self, data):
         self._str = str(data)
 
@@ -268,9 +268,9 @@ class BaseString(TLType):
         return bytes(result)
 
 """
-BaseString https://core.telegram.org/type/string
+String https://core.telegram.org/type/string
 """
-class BaseBytes(TLType):
+class Bytes(TLType):
     def __init__(self, source, encoding=None, errors=None):
         if encoding is None and errors is None:
             self._bytes = bytes(source)
