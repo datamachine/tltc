@@ -42,5 +42,9 @@ class _Targets:
 	def get(self, name):
 		return self._targets.get(name, None)
 
+	def init_target(self, target):
+		if target not in self._targets:
+			raise Exception("Target does not exists: '{}'".format(target))
+
 Targets = _Targets()
 
