@@ -2,9 +2,12 @@ from enum import Enum
 
 
 class IRIdentifier:
-    _IdentifierKind = Enum('IdentifierKind', ['NAMESPACE', 'COMBINATOR', 'BOXED_TYPE', 'BARE_TYPE'])
+    _IdentifierKind = Enum('IdentifierKind', ['PARAMETER', 'COMBINATOR', 'TYPE'])
+    PARAMETER = _IdentifierKind.PARAMETER
+    COMBINATOR = _IdentifierKind.COMBINATOR
+    TYPE = _IdentifierKind.TYPE
 
-    def __init__(self, *, namespace=None, ident=None):
+    def __init__(self, kind, namespace, ident):
         self.namespace = namespace
         self.ident = ident
         if namespace is None:

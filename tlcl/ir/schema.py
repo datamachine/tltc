@@ -101,7 +101,7 @@ class IRSchema:
             return 'error', {'groups', groups}
 
         kind = IRCombinator.CONSTRUCTOR if section == 'constructors' else IRCombinator.FUNCTION
-        identifer = IRIdentifier(namespace=combinator_namespace, ident=combinator_identifier)
+        identifer = IRIdentifier(IRIdentifier.COMBINATOR, combinator_namespace, combinator_identifier)
 
         combinator = IRCombinator(kind, identifer, number=number)
 
@@ -115,8 +115,9 @@ class IRSchema:
 
         t = self.types.get(groups['optional_parameter_type'], None)
         if not t:
-            identifer = IRIdentifier(namespace=groups['optional_parameter_type_namespace'], 
-                                     ident=groups['optional_parameter_type_identifier'])
+            identifer = IRIdentifier(IRIdentifier.PARAMETER,
+                                     groups['optional_parameter_type_namespace'], 
+                                     groups['optional_parameter_type_identifier'])
             t = IRType(identifer)
             self.types[groups['optional_parameter_type']] = t
 
@@ -134,8 +135,9 @@ class IRSchema:
 
         t = self.types.get(groups['parameter_type'], None)
         if not t:
-            identifer = IRIdentifier(namespace=groups['parameter_type_namespace'], 
-                                     ident=groups['parameter_type_namespace'])
+            identifer = IRIdentifier(IRIdentifier.PARAMETER,
+                                     groups['parameter_type_namespace'], 
+                                     groups['parameter_type_namespace'])
             t = IRType(identifer)
             self.types[groups['parameter_type']] = t
 
@@ -153,8 +155,9 @@ class IRSchema:
 
         t = self.types.get(groups['combinator_result_type'], None)
         if not t:
-            identifer = IRIdentifier(namespace=groups['combinator_result_type_namespace'], 
-                                     ident=groups['combinator_result_type_identifier'])
+            identifer = IRIdentifier(IRIdentifier.TYPE,
+                                     groups['combinator_result_type_namespace'], 
+                                     groups['combinator_result_type_identifier'])
             t = IRType(identifer)
             self.types[groups['combinator_result_type']] = t
         combinator.set_result_type(t)

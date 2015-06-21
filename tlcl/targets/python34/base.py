@@ -1,7 +1,7 @@
 
 from abc import ABCMeta, abstractmethod
 import numbers
-
+from enum import Enum
 
 """
 Types used as base classes for TL combinators and types
@@ -27,8 +27,14 @@ class TLLayer:
         TLLayers.set_layer(number, layer)
 
 class TLType(metaclass=ABCMeta):
+    _TLTypeKind = Enum('TLTypeKind', ['BARE', 'BOXED'])
+
     def __init__(self):
         self._combinators = {}
+
+    @abstractmethod
+    def serialize(self):
+        raise NotImplemented
 
 class Combinator(metaclass=ABCMeta):
     _combinators = {}

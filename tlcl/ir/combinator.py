@@ -38,8 +38,8 @@ class IRCombinator:
         return self._result_type
     
     def add_parameter(self, param_ident, arg_namespace, arg_ident, kind):        
-        param_ident = IRIdentifier(ident=param_ident)
-        arg_type = IRType(IRIdentifier(namespace=arg_namespace, ident=arg_ident))
+        param_ident = IRIdentifier(kind=IRIdentifier.PARAMETER, namespace=None, ident=param_ident)
+        arg_type = IRType(IRIdentifier(kind=IRIdentifier.TYPE, namespace=arg_namespace, ident=arg_ident))
         self._params.append(IRParameter(kind, param_ident, arg_type))
         
     def set_result_type(self, result_type):
