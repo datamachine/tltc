@@ -2,8 +2,6 @@
 from abc import ABCMeta, abstractmethod
 import numbers
 
-from functools import partial
-
 
 """
 Types used as base classes for TL combinators and types
