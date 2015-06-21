@@ -11,8 +11,5 @@ if __name__ == '__main__':
     s = String('test')
     print(s.serialize())
 
-    b = Bytes(255)
-    print(b.serialize())
-
     _bool = Bool(True)
     print('boolTrue:', _bool.serialize())

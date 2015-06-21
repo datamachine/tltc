@@ -30,13 +30,16 @@ class TLLayer:
 
 class TLType(metaclass=ABCMeta):
     _TLTypeKind = Enum('TLTypeKind', ['BARE', 'BOXED'])
-
-    def __init__(self):
-        self._combinators = {}
+    BARE = _TLTypeKind.BARE
+    BOXED = _TLTypeKind.BOXED
 
     @abstractmethod
     def serialize(self):
         raise NotImplemented
+
+    #@abstractmethod
+    #def deserialize(self):
+    #    raise NotImplemented
 
 class Combinator(metaclass=ABCMeta):
     _combinators = {}

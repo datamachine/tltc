@@ -5,7 +5,6 @@ from .identifier import IRIdentifier
 from .param import IRParameter
 from .type import IRType
 
-
 class IRCombinator:
     _combinators_by_identifier = OrderedDict()
     _combinators_by_number = OrderedDict()
@@ -25,18 +24,16 @@ class IRCombinator:
     @staticmethod
     def create_new(kind, identifier, number):
         if identifier.full_ident in IRCombinator._combinators_by_identifier:
-            raise Exception('Combinator with identifier already exists: \'{}\''.format(identifier.full_ident))
+            raise Exception('Combinator with identifier already exists: \'{:x}\''.format(identifier.full_ident))
 
         if number in IRCombinator._combinators_by_number:
-            raise Exception('Combinator with number already exists: \'{}\''.format(number))
+            raise Exception('Combinator with number already exists: \'{:x}\''.format(number))
 
         combinator = IRCombinator(kind, identifier, number)
 
         IRCombinator._combinators_by_number[number] = combinator
         IRCombinator._combinators_by_identifier[identifier.full_ident] = combinator
         return combinator
-
-
 
     @property
     def kind(self):
@@ -65,8 +62,8 @@ class IRCombinator:
         self._result_type = result_type
 
     def __repr__(self):
-        fmt='<IRCombinator: kind={}, identifier={}, number={}, params={}, result_type={}>'
+        fmt='<IRCombinator: kind={}, identifier={}, number={:x}, params={}, result_type={}>'
         ps = ['{}:{}'.format(p.param_ident.full_ident, p.arg_type.identifier.full_ident) for p in self.params]
-        ps = len('[' + ', '.join(ps) + ']')
+        ps = '[' + ', '.join(ps) + ']'
         return fmt.format(self.kind, self.identifier.full_ident, self.number, ps, self.result_type)
 

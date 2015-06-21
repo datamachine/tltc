@@ -1,4 +1,4 @@
 from .targets import Targets
-from . import python34
+from .python34 import Python34Target
 
-python34.add_target() 
+Targets.add_target(Python34Target)

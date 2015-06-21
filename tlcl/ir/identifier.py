@@ -1,8 +1,8 @@
 from enum import Enum
-
+import re
 
 class IRIdentifier:
-    _IdentifierKind = Enum('IdentifierKind', ['PARAMETER', 'COMBINATOR', 'TYPE'])
+    _IdentifierKind = Enum('IdentifierKind', ['PARAMETER', 'COMBINATOR', 'TYPE', 'TEMPLATE'])
     PARAMETER = _IdentifierKind.PARAMETER
     COMBINATOR = _IdentifierKind.COMBINATOR
     TYPE = _IdentifierKind.TYPE
@@ -15,6 +15,15 @@ class IRIdentifier:
             self.full_ident = self.ident
         else:
             self.full_ident = '{}.{}'.format(namespace, ident)
+
+    def is_boxed(self):
+        if self.kind is not IRIdentifier.TYPE:
+            return False
+        
+        if self.ident in ['t']:
+            return False
+
+        return re.match('[a-z]', self.ident) is None
 
     def __repr__(self):
         fmt = '<IRIdentifier: kind={}, namespace={}, ident={}, full_ident={}>'

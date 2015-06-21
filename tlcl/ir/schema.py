@@ -162,6 +162,10 @@ class IRSchema:
         print('ERROR:\t{}:\t{}'.format(matches, kwargs))
         return 'quit', {}
 
+    def print_combinators_by_number(self, func=repr):
+        for key, val in IRCombinator._combinators_by_number.items():
+            print('{}'.format(func(val)))
+
     def generate_ir(self):
         schema_iter = self.iter_prog.finditer(self._schema)
         kwargs = {'section': 'constructors'}
@@ -172,25 +176,5 @@ class IRSchema:
 
             if state == 'quit':
                 return _fsm_error(i, kwargs)
+        self.print_combinators_by_number()
 
-    @staticmethod
-    def init_translator(translator_type, schema):
-        types = {key:translator_type.Type(t.namespace, t.identifier) for key, t in schema.types.items()}
-        constructors = []
-        for c in schema.constructors:
-            optional_params = [translator_type.OptionalParameter(op.identifier, translator_type.Type(op.type_namespace, op.type_identifier)) for op in c.optional_params]
-            params = [translator_type.Parameter(p.identifier, translator_type.Type(p.type_namespace, p.type_identifier)) for p in c.params]
-            result_type = types[c.result_type.ident_full]
-            constructor = translator_type.Constructor(c.namespace, c.identifier, c.id, optional_params, params, result_type)
-            constructors.append(constructor)
-            result_type.constructors.append(constructor)
-
-        functions = []
-        for c in schema.functions:
-            optional_params = [translator_type.OptionalParameter(op.identifier, translator_type.Type(op.type_namespace, op.type_identifier)) for op in c.optional_params]
-            params = [translator_type.Parameter(p.identifier, translator_type.Type(p.type_namespace, p.type_identifier)) for p in c.params]
-            result_type = types[c.result_type.ident_full]
-            function = translator_type.Function(c.namespace, c.identifier, c.id, optional_params, params, result_type)
-            functions.append(function)
-
-        return translator_type(schema, constructors, functions, types)

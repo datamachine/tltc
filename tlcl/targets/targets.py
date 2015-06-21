@@ -1,23 +1,40 @@
-class Target(dict):
-	def __init__(self, name, description, combinator_cls, param_cls, type_cls):
-		self.name = name
-		self.description = description
-		self.combinator_cls = combinator_cls
-		self.param_cls = param_cls
-		self.type_cls = type_cls
+from abc import ABCMeta, abstractmethod
+
+class Target(metaclass=ABCMeta):
+	@staticmethod
+	@abstractmethod
+	def name():
+		raise NotImplements
+
+	@staticmethod
+	@abstractmethod
+	def description():
+		raise NotImplements
+
+	@staticmethod
+	@abstractmethod
+	def combinator_cls():
+		raise NotImplements
+
+	@staticmethod
+	@abstractmethod
+	def param_cls():
+		raise NotImplements
+
+	@staticmethod
+	@abstractmethod
+	def type_cls():
+		raise NotImplements
 
 class _Targets:
 	def __init__(self):
 		self._targets = {}
 
-	def add(self, target):
-		self._targets[target.name] = target
-
-	def add_new(self, name, description, combinator_cls, param_cls, type_cls):
-		self.add(Target(name=name, description=description, combinator_cls=combinator_cls, param_cls=param_cls, type_cls=type_cls))
+	def add_target(self, target):
+		self._targets[target.name()] = target
 
 	def available(self):
-		return [t for t in self._targets]
+		return self._targets.keys()
 
 	def exists(self, name):
 		return name in self._targets
