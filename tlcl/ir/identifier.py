@@ -15,3 +15,7 @@ class IRIdentifier:
             self.full_ident = self.ident
         else:
             self.full_ident = '{}.{}'.format(namespace, ident)
+
+    def __repr__(self):
+        fmt = '<IRIdentifier: kind={}, namespace={}, ident={}, full_ident>'
+        return fmt.format(self.kind, self.namespace, self.ident, self.full_ident)

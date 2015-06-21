@@ -15,3 +15,6 @@ class IRType:
         else:
             self.kind = IRType.BOXED
         self.identifier = identifier
+
+    def __repr__(self):
+        return '<IRType: kind={}, identifer={}>'.format(self.kind, self.identifier.full_ident)
