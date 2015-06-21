@@ -127,7 +127,7 @@ class IRSchema:
         param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, groups['optional_parameter_identifier'])
         arg_ident = IRIdentifier(IRIdentifier.TYPE, groups['optional_parameter_type_namespace'], groups['optional_parameter_type_identifier'])
         arg_type = IRType(arg_ident)
-        param = IRParameter(IRParameter.ARG_NAT, param_ident, arg_type)
+        param = IRParameter(IRParameter.OPT_ARG, param_ident, arg_type)
 
         combinator.add_parameter(param)
 
@@ -141,21 +141,21 @@ class IRSchema:
         t = None
         param = None
 
-        if groups['parameter_nat']:
+        if groups['parameter_nat'] is not None:
             param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, '#')
             arg_ident = IRIdentifier(IRIdentifier.TYPE, None, '#')
             arg_type = IRType(arg_ident)
             param = IRParameter(IRParameter.ARG_NAT, param_ident, arg_type)
-        elif groups['parameter_multiplicity']:
+        elif groups['parameter_multiplicity'] is not None:
             param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, 't')
             arg_ident = IRIdentifier(IRIdentifier.TYPE, None, 't')
             arg_type = IRType(arg_ident)
-            param = IRParameter(IRParameter.ARG_NAT, param_ident, arg_type)
+            param = IRParameter(IRParameter.MULT, param_ident, arg_type)
         else:
             param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, groups['parameter_identifier'])
             arg_ident = IRIdentifier(IRIdentifier.TYPE, groups['parameter_type_namespace'], groups['parameter_type_identifier'])
             arg_type = IRType(arg_ident)
-            param = IRParameter(IRParameter.ARG_NAT, param_ident, arg_type)
+            param = IRParameter(IRParameter.ARG, param_ident, arg_type)
 
         combinator.add_parameter(param)
 

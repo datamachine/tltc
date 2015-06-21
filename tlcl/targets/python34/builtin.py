@@ -16,6 +16,7 @@ class Vector:
         return bytes(result)
 
     def pseudo_serialize(self):
-        result = ' '.join([data.pseudo_serialize() for data in self._data])
-        return result
-
+        result = []
+        for data in self._data:
+            result += [data.pseudo_serialize()]
+        return ' '.join(result)

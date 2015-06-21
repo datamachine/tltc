@@ -13,6 +13,8 @@ class IRType:
             self.kind = IRType.BARE
 
         self.identifier = identifier
+        self.constructors = []
+        self.functions = []
 
     def __repr__(self):
         return '<IRType: kind={}, identifier={}>'.format(self.kind, self.identifier.full_ident)

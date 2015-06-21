@@ -25,7 +25,21 @@ class Python34Target(Target):
         return Python34Type
 
     def translate(self):
+        types = {}
         for name, ir_type in self.schema.types.items():
-            t = Python34Type(self.schema, ir_type)
-            t.preprocess()
-            print(t.definition())
+            if name in ['Vector t', 'Bool']:
+                print('skipping built-in type: "{}"'.format(name))
+                continue
+
+            t = Python34Type(self, ir_type)
+            types[ir_type.identifier.full_ident] = t
+
+        for name, t in types.items():
+            t.preprocess_member_inits(types)
+
+        for name, t in types.items():
+            print('{:type_definition}'.format(t))
+
+
+        #for name, t in types.items():
+        #    print(t.definition(validate=False))
