@@ -16,9 +16,9 @@ class IRSchema:
         self._schema = schema
         self._construct_iter_expressions()
         self.types = OrderedDict()
-        self.combinators_by_number = OrderedDict()
-        self.combinators_by_identifier = OrderedDict()
-        self.combinators = []
+        self.combinator_identifiers = []
+        self.combinator_numbers = []
+        self.combinators = OrderedDict()
 
     def _construct_iter_expressions(self):
         tokens = [
@@ -79,16 +79,17 @@ class IRSchema:
     def create_new_combinator(self, kind, namespace, ident, number):
         identifier = IRIdentifier(IRIdentifier.COMBINATOR, namespace, ident)
 
-        if identifier in self.combinators_by_identifier:
+        if identifier in self.combinator_identifiers:
             raise Exception('Combinator with identifier already exists: \'{}\''.format(identifier))
 
-        if number in self.combinators_by_number:
+        if number in self.combinator_numbers:
             raise Exception('Combinator with number already exists: \'{:x}\''.format(number))
 
         combinator = IRCombinator(kind, identifier, number)
 
-        self.combinators_by_number[number] = combinator
-        self.combinators_by_identifier[identifier] = combinator
+        self.combinator_numbers.append(number)
+        self.combinator_identifiers.append(identifier)
+        self.combinators[str(combinator.identifier)] = combinator
        
         return combinator
 

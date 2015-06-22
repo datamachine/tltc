@@ -65,7 +65,7 @@ class _Targets:
 			tgt_type = type_cls(ir_type)
 			types[ir_type] = tgt_type
 
-		for ident, ir_combinator in schema.combinators_by_identifier.items():
+		for ident, ir_combinator in schema.combinators.items():
 			params = []
 			for ir_param in ir_combinator.params:
 				arg_type = types.get(ir_param.arg_type)
