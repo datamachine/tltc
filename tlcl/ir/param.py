@@ -15,4 +15,7 @@ class IRParameter:
 
     def __repr__(self):
         fmt='<IRParameter: kind={}, param_ident={}, arg_type={}>'
-        return fmt.format(self.kind, self.param_ident.full_ident, self.arg_type.identifier.full_ident)
+        return fmt.format(self.kind, self.param_ident, self.arg_type.identifier)
+
+    def __str__(self):
+        return '{}:{}'.format(self.param_ident, self.arg_type.identifier)

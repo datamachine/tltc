@@ -37,6 +37,11 @@ class IRCombinator:
     @property
     def result_type(self):
         return self._result_type
+
+    @property
+    def lc_ident_full(self):
+        return '{}#{:x}'.format(str(self.identifier), self.number)
+    
     
     def add_parameter(self, param):    
         self._params.append(param)
@@ -47,7 +52,10 @@ class IRCombinator:
 
     def __repr__(self):
         fmt='<IRCombinator: kind={}, identifier={}, number={:x}, params={}, result_type={}>'
-        ps = ['{}:{}'.format(p.param_ident.full_ident, p.arg_type.identifier.full_ident) for p in self.params]
+        ps = ['{}:{}'.format(str(p.param_ident), str(p.arg_type.identifier)) for p in self.params]
         ps = '[' + ', '.join(ps) + ']'
-        return fmt.format(self.kind, self.identifier.full_ident, self.number, ps, self.result_type)
+        return fmt.format(self.kind, str(self.identifier), self.number, ps, self.result_type)
+
+    def __str__(self):
+        return self.lc_ident_full
 

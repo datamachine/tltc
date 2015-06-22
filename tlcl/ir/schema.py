@@ -79,8 +79,8 @@ class IRSchema:
     def create_new_combinator(self, kind, namespace, ident, number):
         identifier = IRIdentifier(IRIdentifier.COMBINATOR, namespace, ident)
 
-        if identifier.full_ident in self.combinators_by_identifier:
-            raise Exception('Combinator with identifier already exists: \'{:x}\''.format(identifier.full_ident))
+        if identifier in self.combinators_by_identifier:
+            raise Exception('Combinator with identifier already exists: \'{}\''.format(identifier))
 
         if number in self.combinators_by_number:
             raise Exception('Combinator with number already exists: \'{:x}\''.format(number))
@@ -88,14 +88,14 @@ class IRSchema:
         combinator = IRCombinator(kind, identifier, number)
 
         self.combinators_by_number[number] = combinator
-        self.combinators_by_identifier[identifier.full_ident] = combinator
+        self.combinators_by_identifier[identifier] = combinator
        
         return combinator
 
     def create_new_type(self, namespace, ident):
         identifier = IRIdentifier(IRIdentifier.TYPE, namespace, ident)
         ir_type = IRType(identifier)
-        self.types[identifier.full_ident] = ir_type
+        self.types[identifier] = ir_type
         return ir_type
 
 

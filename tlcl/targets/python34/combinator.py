@@ -4,7 +4,7 @@ from .param import Python34Parameter
 
 template="""
 class {{identifier}}(TLCombinator):
-    _number = {{number}}
+    _number = {number:#x}
 
     @staticmethod
     def deserialize(io_bytes):
@@ -12,11 +12,16 @@ class {{identifier}}(TLCombinator):
 """
 
 class Python34Combinator:
-    def __init__(self, target, ir_combinator):
-        self.target = target
+    def __init__(self, ir_combinator, params, result_type):
         self._ir_combinator = ir_combinator
-        self._params = None
-        self._set_result_type()
+        self._params = params
+        self._result_type = result_type
+        #self.target = target
+        #self._ir_combinator = ir_combinator
+        #self._params = None
+        #self._number = ir_combinator.number
+        #self._set_result_type()
+
 
     def _set_result_type(self):
         result = self._ir_combinator.result_type
@@ -26,7 +31,7 @@ class Python34Combinator:
 
     @property
     def identifier(self):
-        return self._ir_combinator.identifier.full_ident
+        return self._number
 
     @property
     def number(self):
@@ -49,7 +54,7 @@ class Python34Combinator:
         return self._result_type
 
     def definition(self):
-        return template
+        return template.format(number=self.number)
 
     def __str__(self):
         return '{}#{:x}'.format(self.identifier, self.number)

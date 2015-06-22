@@ -11,10 +11,11 @@ template="""
 """
 
 class Python34Type:
-    def __init__(self, target, ir_type):
-        self.target = target
-        self.ir_type = ir_type
-        self.constructors = OrderedDict()
+    def __init__(self, ir_type):
+        self._ir_type = ir_type
+        #self.target = target
+        #self.ir_type = ir_type
+        #self.constructors = OrderedDict()
 
     def _preprocess_params(self):
         self.param_data = []

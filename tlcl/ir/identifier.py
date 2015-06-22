@@ -11,10 +11,6 @@ class IRIdentifier:
         self.kind = IRIdentifier._IdentifierKind(kind)
         self.namespace = namespace
         self.ident = ident
-        if namespace is None:
-            self.full_ident = self.ident
-        else:
-            self.full_ident = '{}.{}'.format(namespace, ident)
 
     def is_boxed(self):
         if self.kind is not IRIdentifier.TYPE:
@@ -25,6 +21,17 @@ class IRIdentifier:
 
         return re.match('[a-z]', self.ident) is None
 
+    @property
+    def identifier(self):
+        fmt = '{ident}' if self.namespace is None else '{namespace}.{ident}'
+        return fmt.format(namespace=self.namespace, ident=self.ident)
+
+    def __str__(self):
+        return self.identifier
+
     def __repr__(self):
-        fmt = '<IRIdentifier: kind={}, namespace={}, ident={}, full_ident={}>'
-        return fmt.format(self.kind, self.namespace, self.ident, self.full_ident)
+        fmt = '<IRIdentifier({}): kind={}, namespace={}, ident={}>'
+        return fmt.format(self.identifier, self.kind, self.namespace, self.ident)
+
+    def __hash__(self):
+        return hash(str(self))

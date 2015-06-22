@@ -14,21 +14,25 @@ class Python34Target(Target):
         self.preprocess()
 
     def preprocess(self):
-        for name, t in self.schema.types.items():
-            self.types[name] = Python34Type(self, t)
+        pass
+        # for t in self.schema.types:
+        #     pass
 
-        for name, c in self.schema.combinators_by_identifier.items():
-            if name in BUILTIN_COMBINATORS:
-                print('Skipping built-in type "{}"'.format(name))
-                continue
-            combinator = Python34Combinator(self, c)
-            self.combinators[c.identifier.full_ident] = combinator
+        # for name, t in self.schema.types.items():
+        #     self.types[name] = Python34Type(self, t)
 
-        for name, c in self.combinators.items():
-            print(c.definition())
+        # for name, c in self.schema.combinators_by_identifier.items():
+        #     if name in BUILTIN_COMBINATORS:
+        #         print('Skipping built-in type "{}"'.format(name))
+        #         continue
+        #     combinator = Python34Combinator(self, c)
+        #     self.combinators[c.identifier.full_ident] = combinator
 
-        for n, t in self.types.items():
-            print(t.constructors)
+        # for name, c in self.combinators.items():
+        #     print(c.definition())
+
+        # for n, t in self.types.items():
+        #     print(t.constructors)
 
     @staticmethod
     def name():

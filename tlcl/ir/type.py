@@ -18,3 +18,6 @@ class IRType:
 
     def __repr__(self):
         return '<IRType: kind={}, identifier={}>'.format(self.kind, self.identifier.full_ident)
+
+    def __str__(self):
+        return str(self.identifier)
