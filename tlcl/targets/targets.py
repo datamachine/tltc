@@ -51,6 +51,8 @@ class _Targets:
 		return self._targets[target_name]
 
 	def init_target(self, target_name, schema):
+		from sys import stderr
+
 		target_cls = self.get_target(target_name)
 		type_cls = target_cls.type_cls()
 		param_cls = target_cls.param_cls()
@@ -71,14 +73,14 @@ class _Targets:
 				arg_type = types.get(ir_param.arg_type)
 				if arg_type is None:
 					arg_type = str(ir_param.arg_type)
-					print('WARNING: {} in parameter "{}"; unkown arg type: {}'.format(ir_combinator, ir_param, ir_param.arg_type))
+					print('WARNING: {} in parameter "{}"; unkown arg type: {}'.format(ir_combinator, ir_param, ir_param.arg_type), file=stderr)
 				param = param_cls(ir_param, arg_type)
 				params.append(param)
 
 			result_type = types.get(ir_combinator.result_type)
 			if result_type is None:
 				result_type = str(ir_combinator.result_type)
-				print('WARNING: {} unkown combinator result type: {}'.format(ir_combinator, result_type))
+				print('WARNING: {} unkown combinator result type: {}'.format(ir_combinator, result_type), file=stderr)
 
 			combinator = combinator_cls(
 				ir_combinator=ir_combinator,

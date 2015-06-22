@@ -89,7 +89,7 @@ class IRSchema:
 
         self.combinator_numbers.append(number)
         self.combinator_identifiers.append(identifier)
-        self.combinators[str(combinator.identifier)] = combinator
+        self.combinators[str(combinator.lc_ident_full)] = combinator
        
         return combinator
 
@@ -187,8 +187,8 @@ class IRSchema:
         return 'quit', {}
 
     def print_combinators(self, func=repr):
-        for key, val in self.combinators_by_number.items():
-            print('{}'.format(func(val)))
+        for name, combinator in self.combinators.items():
+            print(repr(combinator))
 
     def generate_ir(self):
         schema_iter = self.iter_prog.finditer(self._schema)
@@ -200,4 +200,5 @@ class IRSchema:
 
             if state == 'quit':
                 return _fsm_error(i, kwargs)
+        self.print_combinators()
 

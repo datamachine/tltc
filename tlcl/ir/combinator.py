@@ -52,9 +52,8 @@ class IRCombinator:
 
     def __repr__(self):
         fmt='<IRCombinator: kind={}, identifier={}, number={:x}, params={}, result_type={}>'
-        ps = ['{}:{}'.format(str(p.param_ident), str(p.arg_type.identifier)) for p in self.params]
-        ps = '[' + ', '.join(ps) + ']'
-        return fmt.format(self.kind, str(self.identifier), self.number, ps, self.result_type)
+        params = '[{}]'.format(', '.join([str(param) for param in self.params]))
+        return fmt.format(self.kind, str(self.identifier), self.number, params, self.result_type)
 
     def __str__(self):
         return self.lc_ident_full
