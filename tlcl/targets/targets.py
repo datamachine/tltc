@@ -63,21 +63,21 @@ class _Targets:
 
 		for name, ir_type in schema.types.items():
 			tgt_type = type_cls(ir_type)
-			types[ir_type.identifier] = tgt_type
+			types[ir_type] = tgt_type
 
 		for ident, ir_combinator in schema.combinators_by_identifier.items():
 			params = []
 			for ir_param in ir_combinator.params:
-				arg_type = types.get(ir_param.arg_type.identifier)
+				arg_type = types.get(ir_param.arg_type)
 				if arg_type is None:
-					arg_type = str(ir_param.arg_type.identifier)
+					arg_type = str(ir_param.arg_type)
 					print('WARNING: {} in parameter "{}"; unkown arg type: {}'.format(ir_combinator, ir_param, ir_param.arg_type))
 				param = param_cls(ir_param, arg_type)
 				params.append(param)
 
-			result_type = types.get(ir_combinator.result_type.identifier)
+			result_type = types.get(ir_combinator.result_type)
 			if result_type is None:
-				result_type = str(ir_combinator.result_type.identifier)
+				result_type = str(ir_combinator.result_type)
 				print('WARNING: {} unkown combinator result type: {}'.format(ir_combinator, result_type))
 
 			combinator = combinator_cls(

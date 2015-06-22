@@ -14,6 +14,11 @@ class IRParameter:
         self._arg_type = arg_type
 
     @property
+    def arg_type(self):
+        return self._arg_type
+    
+
+    @property
     def identifier(self):
         return self._ir_ident.identifier
 

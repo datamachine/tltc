@@ -47,4 +47,4 @@ class IRIdentifier:
         return fmt.format(self.identifier, self.kind, self.namespace, self.ident)
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(self.identifier)
