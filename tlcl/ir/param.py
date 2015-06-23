@@ -27,4 +27,6 @@ class IRParameter:
         return fmt.format(self, self.kind, self.arg_type)
 
     def __str__(self):
+        if self._kind == IRParameter.MULT:
+            return '[ {} ]'.format(self.arg_type)
         return '{}:{}'.format(self.identifier, self.arg_type)

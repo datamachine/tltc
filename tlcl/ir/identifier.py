@@ -6,6 +6,7 @@ class IRIdentifier:
     PARAMETER = _IdentifierKind.PARAMETER
     COMBINATOR = _IdentifierKind.COMBINATOR
     TYPE = _IdentifierKind.TYPE
+    TEMPLATE = _IdentifierKind.TEMPLATE
 
     def __init__(self, kind, namespace, ident):
         self._kind = IRIdentifier._IdentifierKind(kind)

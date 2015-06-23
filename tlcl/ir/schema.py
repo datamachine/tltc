@@ -13,13 +13,22 @@ from .combinator import IRCombinator
 from collections import OrderedDict
 
 def _get_builtin_types():
-    Int_t = IRType(IRIdentifier(IRIdentifier.TYPE, None, 'Int'))
-    Long_t = IRType(IRIdentifier(IRIdentifier.TYPE, None, 'Long'))
-    Double_t = IRType(IRIdentifier(IRIdentifier.TYPE, None, 'Double'))
-    String_t = IRType(IRIdentifier(IRIdentifier.TYPE, None, 'String'))
-    Bytes_t = IRType(IRIdentifier(IRIdentifier.TYPE, None, 'Bytes'))
+    int_t = IRType(IRType.BARE, IRIdentifier(IRIdentifier.TYPE, None, 'int'))
+    long_t = IRType(IRType.BARE, IRIdentifier(IRIdentifier.TYPE, None, 'long'))
+    double_t = IRType(IRType.BARE, IRIdentifier(IRIdentifier.TYPE, None, 'double'))
+    string_t = IRType(IRType.BARE, IRIdentifier(IRIdentifier.TYPE, None, 'string'))
+    bytes_t = IRType(IRType.BARE, IRIdentifier(IRIdentifier.TYPE, None, 'bytes'))
+    Type_t = IRType(IRType.BOXED, IRIdentifier(IRIdentifier.TYPE, None, 'Type'))
+    nat_t = IRType(IRType.BOXED, IRIdentifier(IRIdentifier.TYPE, None, '#'))
 
-    return {'Int':Int_t, 'Long':Long_t, 'Double':Double_t, 'String':String_t, 'Bytes':Bytes_t}
+    Int_t = IRType(IRType.BOXED, IRIdentifier(IRIdentifier.TYPE, None, 'Int'))
+    Long_t = IRType(IRType.BOXED, IRIdentifier(IRIdentifier.TYPE, None, 'Long'))
+    Double_t = IRType(IRType.BOXED, IRIdentifier(IRIdentifier.TYPE, None, 'Double'))
+    String_t = IRType(IRType.BOXED, IRIdentifier(IRIdentifier.TYPE, None, 'String'))
+    Bytes_t = IRType(IRType.BOXED, IRIdentifier(IRIdentifier.TYPE, None, 'Bytes'))
+
+    return {'int':int_t, 'long':long_t, 'double':double_t, 'string':string_t, 'bytes':bytes_t, '#':nat_t,
+            'Type':Type_t, 'Int':Int_t, 'Long':Long_t, 'Double':Double_t, 'String':String_t, 'Bytes':Bytes_t}
 
 def _get_builtin_combinators():
     t = _get_builtin_types()
@@ -75,6 +84,7 @@ class IRSchema:
             ')'.format(**TLSyntax.TL),
             # optional parameter names and types
             '(?P<optional_parameter>'
+                '\{{'
                     '(?P<optional_parameter_identifier>\S+):'
                     '(?P<optional_parameter_type>'
                         '(?:(?P<optional_parameter_type_namespace>{lc-ident-ns})\.|)'
@@ -140,7 +150,7 @@ class IRSchema:
 
     def create_new_type(self, namespace, ident):
         identifier = IRIdentifier(IRIdentifier.TYPE, namespace, ident)
-        ir_type = IRType(identifier)
+        ir_type = IRType(IRType.BOXED, identifier)
         self.types[identifier] = ir_type
         return ir_type
 
@@ -171,7 +181,7 @@ class IRSchema:
 
         param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, groups['optional_parameter_identifier'])
         arg_ident = IRIdentifier(IRIdentifier.TYPE, groups['optional_parameter_type_namespace'], groups['optional_parameter_type_identifier'])
-        arg_type = IRType(arg_ident)
+        arg_type = IRType(IRType.BOXED, arg_ident)
         param = IRParameter(IRParameter.OPT_ARG, param_ident, arg_type)
 
         combinator.add_parameter(param)
@@ -189,17 +199,17 @@ class IRSchema:
         if groups['parameter_nat'] is not None:
             param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, '#')
             arg_ident = IRIdentifier(IRIdentifier.TYPE, None, '#')
-            arg_type = IRType(arg_ident)
+            arg_type = IRType(IRType.NAT, arg_ident)
             param = IRParameter(IRParameter.ARG_NAT, param_ident, arg_type)
         elif groups['parameter_multiplicity'] is not None:
-            param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, 't')
+            param_ident = IRIdentifier(IRIdentifier.TEMPLATE, None, None)
             arg_ident = IRIdentifier(IRIdentifier.TYPE, None, 't')
-            arg_type = IRType(arg_ident)
+            arg_type = IRType(IRType.TEMPLATE, arg_ident)
             param = IRParameter(IRParameter.MULT, param_ident, arg_type)
         else:
             param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, groups['parameter_identifier'])
             arg_ident = IRIdentifier(IRIdentifier.TYPE, groups['parameter_type_namespace'], groups['parameter_type_identifier'])
-            arg_type = IRType(arg_ident)
+            arg_type = IRType(IRType.BOXED, arg_ident)
             param = IRParameter(IRParameter.ARG, param_ident, arg_type)
 
         combinator.add_parameter(param)
@@ -253,4 +263,3 @@ class IRSchema:
 
             if state == 'quit':
                 return _fsm_error(i, kwargs)
-

@@ -40,8 +40,7 @@ class IRCombinator:
 
     @property
     def lc_ident_full(self):
-        return '{}#{:x}'.format(self.identifier, self.number)
-    
+        return '{}#{:x}'.format(self.identifier, self.number)    
     
     def add_parameter(self, param):    
         self._params.append(param)
@@ -59,5 +58,5 @@ class IRCombinator:
         return self.lc_ident_full
 
     def __hash__(self):
-        return hash(self.lc_ident_full)
+        return hash(self.number)
 

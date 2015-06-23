@@ -8,26 +8,6 @@ import zlib
 """
 Types used as base classes for TL combinators and types
 """
-class TLObject(metaclass=ABCMeta):
-    @abstractmethod
-    def serialize(self):
-        raise NotImplemented
-
-class TLLayer:
-    _layers = {}
-
-    def __init__(self, number):
-        self.number = number
-        TLLayer.set_layer(number, self)
-
-    @staticmethod
-    def layer(number):
-        return TLLayers.get(number, None)
-
-    @staticmethod
-    def set_layer(number, layer):
-        TLLayers.set_layer(number, layer)
-
 class TLType(metaclass=ABCMeta):
     _TLTypeKind = Enum('TLTypeKind', ['BARE', 'BOXED'])
     BARE = _TLTypeKind.BARE
@@ -255,7 +235,7 @@ class Bool(_TLIntegralType):
         return '{:#x}'.format(self._true if self._bool else self._false)
 Bool.register(Bool._cls)
 
-class Double(numbers.Real, TLObject):
+class Double(numbers.Real):
     def __init__(self, _double):
         super().__init__(_double)
 
