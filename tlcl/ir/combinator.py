@@ -11,12 +11,12 @@ class IRCombinator:
     CONSTRUCTOR = _IRCombinatorKind.CONSTRUCTOR
     FUNCTION = _IRCombinatorKind.FUNCTION
 
-    def __init__(self, kind, ir_ident, number, params=[], result_type=[]):
+    def __init__(self, kind, ir_ident, number, params=None, result_type=None):
         self._kind = IRCombinator._IRCombinatorKind(kind)
         self._ir_ident = ir_ident
         self._number = number
-        self._params = []
-        self._result_type = None
+        self._params = [] if params is None else params
+        self._result_type = result_type
 
     @property
     def kind(self):
