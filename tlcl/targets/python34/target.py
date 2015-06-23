@@ -6,8 +6,6 @@ from .ident import Python34Identifier
 from ..targets import Target
 from collections import OrderedDict
 
-BUILTIN_COMBINATORS = ['vector', 'int', 'long', 'double', 'bool', 'string', 'bytes']
-
 class Python34Target(Target):
     def __init__(self, schema, types, combinators):
         self.schema = schema
@@ -39,8 +37,20 @@ class Python34Target(Target):
         return Python34Identifier
 
     def translate(self):
-        for name, t in self.types.items():
-            print(t.definition())
+        print('from collections import namedtuple')
+        try:
+            for name, t in self.types.items():
+                print(t.definition())
+        except Exception as e:
+            raise e
 
         for name, c in self.combinators.items():
-            print(c.definition())
+            try:
+                print(c.definition())
+            except Exception as e:
+                print(c)
+                print(e)
+                raise e
+
+        for name, c in self.combinators.items():
+            print('{}.deserialize(bytes(2000))'.format(c.py3ident))

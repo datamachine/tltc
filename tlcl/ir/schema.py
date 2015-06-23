@@ -13,11 +13,6 @@ from .combinator import IRCombinator
 from collections import OrderedDict
 
 def _get_builtin_types():
-    int_t = IRType(IRType.BARE, IRIdentifier(IRIdentifier.TYPE, None, 'int'))
-    long_t = IRType(IRType.BARE, IRIdentifier(IRIdentifier.TYPE, None, 'long'))
-    double_t = IRType(IRType.BARE, IRIdentifier(IRIdentifier.TYPE, None, 'double'))
-    string_t = IRType(IRType.BARE, IRIdentifier(IRIdentifier.TYPE, None, 'string'))
-    bytes_t = IRType(IRType.BARE, IRIdentifier(IRIdentifier.TYPE, None, 'bytes'))
     Type_t = IRType(IRType.BOXED, IRIdentifier(IRIdentifier.TYPE, None, 'Type'))
     nat_t = IRType(IRType.BOXED, IRIdentifier(IRIdentifier.TYPE, None, '#'))
 
@@ -27,8 +22,7 @@ def _get_builtin_types():
     String_t = IRType(IRType.BOXED, IRIdentifier(IRIdentifier.TYPE, None, 'String'))
     Bytes_t = IRType(IRType.BOXED, IRIdentifier(IRIdentifier.TYPE, None, 'Bytes'))
 
-    return {'int':int_t, 'long':long_t, 'double':double_t, 'string':string_t, 'bytes':bytes_t, '#':nat_t,
-            'Type':Type_t, 'Int':Int_t, 'Long':Long_t, 'Double':Double_t, 'String':String_t, 'Bytes':Bytes_t}
+    return {'#':nat_t, 'Type':Type_t, 'Int':Int_t, 'Long':Long_t, 'Double':Double_t, 'String':String_t, 'Bytes':Bytes_t}
 
 def _get_builtin_combinators():
     t = _get_builtin_types()
@@ -97,8 +91,10 @@ class IRSchema:
                 '(?:'
                     '(?P<parameter_identifier>\S+):'
                     '(?P<parameter_type>'
+                        '(?P<vector_parameter>Vector<|)'
                         '(?:(?P<parameter_type_namespace>{lc-ident-ns})\.|)'
-                        '(?P<parameter_type_identifier>\S+)'
+                        '(?P<parameter_type_identifier>[^\s>]+)'
+                        '(?:>|)'
                     ')'
                 ')'
                 '|(?P<parameter_nat>'
@@ -192,7 +188,6 @@ class IRSchema:
         if not groups['parameter']:
             return self._fsm_combinator_result_type(groups, section, combinator)
 
-
         t = None
         param = None
 
@@ -209,7 +204,12 @@ class IRSchema:
         else:
             param_ident = IRIdentifier(IRIdentifier.PARAMETER, None, groups['parameter_identifier'])
             arg_ident = IRIdentifier(IRIdentifier.TYPE, groups['parameter_type_namespace'], groups['parameter_type_identifier'])
-            arg_type = IRType(IRType.BOXED, arg_ident)
+
+            arg_type = None
+            if arg_ident.is_bare():
+                arg_type = IRType(IRType.BARE, arg_ident.boxed())
+            else:
+                arg_type = IRType(IRType.BOXED, arg_ident)
             param = IRParameter(IRParameter.ARG, param_ident, arg_type)
 
         combinator.add_parameter(param)
@@ -236,10 +236,8 @@ class IRSchema:
 
         return 'combinators', {'section':section}
 
-    def _fsm_error(self, matches, **kwargs):
-        print('_fsm_error')
-        print('ERROR:\t{}:\t{}'.format(matches, kwargs))
-        return 'quit', {}
+    def _fsm_error(self, matches, *args, **kwargs):
+        raise Exception('ERROR:\t{}:\n\t{}\n\t{}'.format(matches, args, kwargs))
 
     def print_combinators(self, func=repr):
         for name, combinator in self.combinators.items():
@@ -247,12 +245,12 @@ class IRSchema:
 
     def generate_ir(self):
         for name, ir_type in _get_builtin_types().items():
-            self.types[ir_type.identifier] = ir_type
+            self.types[ir_type.ident_full] = ir_type
 
         for name, ir_combinator in _get_builtin_combinators().items():
             self.combinator_numbers.append(ir_combinator.number)
             self.combinator_identifiers.append(name)
-            self.combinators[str(ir_combinator.lc_ident_full)] = ir_combinator
+            self.combinators[ir_combinator.lc_ident_full] = ir_combinator
 
         schema_iter = self.iter_prog.finditer(self._schema)
         kwargs = {'section': 'constructors'}
@@ -262,4 +260,4 @@ class IRSchema:
             state, kwargs = func(i.groupdict(), **kwargs)
 
             if state == 'quit':
-                return _fsm_error(i, kwargs)
+                self._fsm_error(i, kwargs)

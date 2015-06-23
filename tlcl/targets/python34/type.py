@@ -1,31 +1,49 @@
 from inspect import Signature, Parameter
 from pathlib import Path
 from collections import OrderedDict
+from .ident import Python34Identifier
 
 __all__ = ('Python34Type')
 
 template="""
 class {identifier}:
-    pass
+    def __init__({init_sig}):
+        {member_init}
+
+    def deserialize(io_bytes):
+        return io_bytes
 """
 
 class Python34Type:
     def __init__(self, ident, ir_type):
         self._ident = ident
         self._ir_type = ir_type
+        self._constructors = {}
+        self._members = {}
 
-    def definition(self, validate=True):
-        if validate:
-            self.validate()
-        return template.format(**self.fields)
+    def add_constructor(self, constructor):
+        self._constructors[constructor.number] = constructor
+        for p in constructor.params:
+            self._members[p.py3ident] = p
 
     @property
-    def identifier(self):
-        if str(self._ident.ir_ident) == '#':
-            return 'Nat'
-        if str(self._ident.ir_ident) == 'Vector t':
-            return 'Vector'
-        return self._ident
+    def py3ident(self):
+        ident = self._ident.ir_ident.ident_full
+        if ident == 'Vector t':
+            ident = 'Vector'
+        elif ident == '#':
+            ident = 'NatNumber'
+        else:
+            ident = self._ident.py3ident
+            ident = ident[0].upper() + ident[1:]
+
+        ident = '{}_t'.format(ident)
+
+        Python34Identifier.validate(ident)
+
+        return ident
 
     def definition(self):
-        return template.format(identifier=self.identifier)
+        init_sig = ', '.join(['self'] + ['{}=None'.format(m) for m in self._members])
+        member_init = '\n        '.join(['self.{0} = {0}'.format(m) for m in self._members] or ['pass'])
+        return template.format(identifier=self.py3ident, init_sig=init_sig, member_init=member_init)

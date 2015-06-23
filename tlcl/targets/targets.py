@@ -64,25 +64,28 @@ class _Targets:
 		combinator_cls = target_cls.combinator_cls()
 		ident_cls = target_cls.ident_cls()
 
-
 		types = OrderedDict()
 		combinators = OrderedDict()
 
+		def convert_type(ir_type):
+			return type_cls(ident_cls(ir_type.ir_ident), ir_type)
+
 		for name, ir_type in schema.types.items():
-			tgt_type = type_cls(ident_cls(ir_type.ir_ident), ir_type)
-			types[str(ir_type)] = tgt_type
+			tgt_type = convert_type(ir_type)
+			types[ir_type.ident_full] = tgt_type
 
 		for name, ir_combinator in schema.combinators.items():
 			params = []
 			for ir_param in ir_combinator.params:
-				arg_type = types.get(str(ir_param.arg_type))
+				arg_type = types.get(ir_param.arg_type.ident_full)
+
 				if arg_type is None:
-					arg_type = str(ir_param.arg_type)
 					print('WARNING: {} in parameter "{}"; unkown arg type: {}'.format(ir_combinator, ir_param, ir_param.arg_type), file=stderr)
-				param = param_cls(ident_cls(ir_param.ir_ident), ir_param, arg_type)
+					continue
+				param = param_cls(ident_cls(ir_param.ir_ident), arg_type, ir_param)
 				params.append(param)
 
-			result_type = types.get(str(ir_combinator.result_type))
+			result_type = types.get(ir_combinator.result_type.ident_full)
 			if result_type is None:
 				result_type = str(ir_combinator.result_type)
 				print('WARNING: {} unkown combinator result type: {}'.format(ir_combinator, result_type), file=stderr)
@@ -95,7 +98,6 @@ class _Targets:
 				)
 
 			combinators[str(ir_combinator)] = combinator
-
 
 		target = target_cls(schema, types, combinators)
 

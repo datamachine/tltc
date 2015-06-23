@@ -18,14 +18,19 @@ class IRParameter:
         return self._arg_type
 
     @property
-    def identifier(self):
-        return self._ir_ident.identifier
-
-    @property
     def ir_ident(self):
         return self._ir_ident
-    
 
+    def is_bare(self):
+        return self._ir_ident.is_bare()
+
+    def is_boxed(self):
+        return self._ir_ident.is_boxed()
+
+    @property
+    def ident_full(self):
+        return self._ir_ident.ident_full
+    
     def __repr__(self):
         fmt='<IRParameter({}): kind={}, arg_type={}>'
         return fmt.format(self, self.kind, self.arg_type)
@@ -33,4 +38,4 @@ class IRParameter:
     def __str__(self):
         if self._kind == IRParameter.MULT:
             return '[ {} ]'.format(self.arg_type)
-        return '{}:{}'.format(self.identifier, self.arg_type)
+        return '{}:{}'.format(self.ident_full, self.arg_type)
