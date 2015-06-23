@@ -8,4 +8,13 @@ class Python34Identifier:
     @property
     def ir_ident(self):
         return self._ir_ident
+
+    @property
+    def ident(self):
+        i = str(self._ir_ident.ident)
+        if not i.isidentifier():
+            raise Exception('"{}" is not a valid python3.4 identifier')
+
+        return i
+    
     

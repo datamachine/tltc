@@ -3,12 +3,13 @@ from inspect import Signature, Parameter
 from .param import Python34Parameter
 
 template="""
-class {{identifier}}(TLCombinator):
+class {identifier}:
     _number = {number:#x}
 
     @staticmethod
     def deserialize(io_bytes):
-        return {{identifier}}.new(...)
+        pass
+        # return {{result_type}}.new(...)
 """
 
 class Python34Combinator:
@@ -27,7 +28,7 @@ class Python34Combinator:
 
     @property
     def identifier(self):
-        return self._number
+        return self._ident.ident
 
     @property
     def number(self):
@@ -50,7 +51,7 @@ class Python34Combinator:
         return self._result_type
 
     def definition(self):
-        return template.format(number=self.number)
+        return template.format(identifier=self.identifier, number=self.number)
 
     def __str__(self):
         return '{}#{:x}'.format(self.identifier, self.number)

@@ -41,3 +41,6 @@ class Python34Target(Target):
     def translate(self):
         for name, t in self.types.items():
             print(t.definition())
+
+        for name, c in self.combinators.items():
+            print(c.definition())
