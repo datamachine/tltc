@@ -9,32 +9,10 @@ from collections import OrderedDict
 BUILTIN_COMBINATORS = ['vector', 'int', 'long', 'double', 'bool', 'string', 'bytes']
 
 class Python34Target(Target):
-    def __init__(self, schema):
+    def __init__(self, schema, types, combinators):
         self.schema = schema
-        self.combinators = OrderedDict()
-        self.types = OrderedDict()
-        self.preprocess()
-
-    def preprocess(self):
-        pass
-        # for t in self.schema.types:
-        #     pass
-
-        # for name, t in self.schema.types.items():
-        #     self.types[name] = Python34Type(self, t)
-
-        # for name, c in self.schema.combinators_by_identifier.items():
-        #     if name in BUILTIN_COMBINATORS:
-        #         print('Skipping built-in type "{}"'.format(name))
-        #         continue
-        #     combinator = Python34Combinator(self, c)
-        #     self.combinators[c.identifier.full_ident] = combinator
-
-        # for name, c in self.combinators.items():
-        #     print(c.definition())
-
-        # for n, t in self.types.items():
-        #     print(t.constructors)
+        self.types = types
+        self.combinators = combinators
 
     @staticmethod
     def name():
@@ -61,4 +39,5 @@ class Python34Target(Target):
         return Python34Identifier
 
     def translate(self):
-        pass
+        for name, t in self.types.items():
+            print(t.definition())

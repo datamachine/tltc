@@ -64,7 +64,6 @@ class _Targets:
 		combinator_cls = target_cls.combinator_cls()
 		ident_cls = target_cls.ident_cls()
 
-		target = target_cls(schema)
 
 		types = OrderedDict()
 		combinators = OrderedDict()
@@ -96,6 +95,9 @@ class _Targets:
 				)
 
 			combinators[str(ir_combinator)] = combinator
+
+
+		target = target_cls(schema, types, combinators)
 
 		return target
 
