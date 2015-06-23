@@ -31,6 +31,11 @@ class Target(metaclass=ABCMeta):
 	def type_cls():
 		raise NotImplemented
 
+	@staticmethod
+	@abstractmethod
+	def ident_cls():
+		raise NotImplemented
+
 class _Targets:
 	def __init__(self):
 		self._targets = {}
@@ -65,19 +70,19 @@ class _Targets:
 
 		for name, ir_type in schema.types.items():
 			tgt_type = type_cls(ir_type)
-			types[ir_type] = tgt_type
+			types[str(ir_type)] = tgt_type
 
-		for ident, ir_combinator in schema.combinators.items():
+		for name, ir_combinator in schema.combinators.items():
 			params = []
 			for ir_param in ir_combinator.params:
-				arg_type = types.get(ir_param.arg_type)
+				arg_type = types.get(str(ir_param.arg_type))
 				if arg_type is None:
 					arg_type = str(ir_param.arg_type)
 					print('WARNING: {} in parameter "{}"; unkown arg type: {}'.format(ir_combinator, ir_param, ir_param.arg_type), file=stderr)
 				param = param_cls(ir_param, arg_type)
 				params.append(param)
 
-			result_type = types.get(ir_combinator.result_type)
+			result_type = types.get(str(ir_combinator.result_type))
 			if result_type is None:
 				result_type = str(ir_combinator.result_type)
 				print('WARNING: {} unkown combinator result type: {}'.format(ir_combinator, result_type), file=stderr)
@@ -88,7 +93,7 @@ class _Targets:
 				result_type=result_type
 				)
 
-			combinators[ir_combinator.lc_ident_full] = combinator
+			combinators[str(ir_combinator)] = combinator
 
 		return target
 

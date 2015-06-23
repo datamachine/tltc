@@ -1,6 +1,8 @@
 from .combinator import Python34Combinator
 from .param import Python34Parameter
 from .type import Python34Type
+from .ident import Python34Identifier
+
 from ..targets import Target
 from collections import OrderedDict
 
@@ -53,6 +55,10 @@ class Python34Target(Target):
     @staticmethod
     def type_cls():
         return Python34Type
+
+    @staticmethod
+    def ident_cls():
+        return Python34Identifier
 
     def translate(self):
         pass

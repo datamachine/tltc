@@ -2,6 +2,7 @@ import sys
 import re
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
+import zlib
 
 from ..syntax.tlsyntax import TLSyntax
 from .type import IRType
@@ -10,6 +11,50 @@ from .param import IRParameter
 from .combinator import IRCombinator
 
 from collections import OrderedDict
+
+def _get_builtin_types():
+    Int_t = IRType(IRIdentifier(IRIdentifier.TYPE, None, 'Int'))
+    Long_t = IRType(IRIdentifier(IRIdentifier.TYPE, None, 'Long'))
+    Double_t = IRType(IRIdentifier(IRIdentifier.TYPE, None, 'Double'))
+    String_t = IRType(IRIdentifier(IRIdentifier.TYPE, None, 'String'))
+    Bytes_t = IRType(IRIdentifier(IRIdentifier.TYPE, None, 'Bytes'))
+
+    return {'Int':Int_t, 'Long':Long_t, 'Double':Double_t, 'String':String_t, 'Bytes':Bytes_t}
+
+def _get_builtin_combinators():
+    t = _get_builtin_types()
+
+    _int = IRCombinator(IRCombinator.CONSTRUCTOR,
+        IRIdentifier(IRIdentifier.COMBINATOR, None, 'int'),
+        zlib.crc32('int ? = Int'.encode()),
+        result_type=t['Int']
+        )
+
+    _long = IRCombinator(IRCombinator.CONSTRUCTOR,
+        IRIdentifier(IRIdentifier.COMBINATOR, None, 'long'),
+        zlib.crc32('long ? = Long'.encode()),
+        result_type=t['Long']
+        )
+
+    _double = IRCombinator(IRCombinator.CONSTRUCTOR,
+        IRIdentifier(IRIdentifier.COMBINATOR, None, 'double'),
+        zlib.crc32('double ? = Double'.encode()),
+        result_type=t['Double']
+        )
+
+    _string = IRCombinator(IRCombinator.CONSTRUCTOR,
+        IRIdentifier(IRIdentifier.COMBINATOR, None, 'string'),
+        zlib.crc32('string ? = String'.encode()),
+        result_type=t['String']
+        )
+
+    _bytes = IRCombinator(IRCombinator.CONSTRUCTOR,
+        IRIdentifier(IRIdentifier.COMBINATOR, None, 'bytes'),
+        zlib.crc32('bytes ? = Bytes'.encode()),
+        result_type=t['Bytes']
+        )
+
+    return {str(_int):_int, str(_long):_long, str(_double):_double, str(_string):_string, str(_bytes):_bytes}
 
 class IRSchema:
     def __init__(self, schema):
@@ -191,6 +236,14 @@ class IRSchema:
             print(repr(combinator))
 
     def generate_ir(self):
+        for name, ir_type in _get_builtin_types().items():
+            self.types[ir_type.identifier] = ir_type
+
+        for name, ir_combinator in _get_builtin_combinators().items():
+            self.combinator_numbers.append(ir_combinator.number)
+            self.combinator_identifiers.append(name)
+            self.combinators[str(ir_combinator.lc_ident_full)] = ir_combinator
+
         schema_iter = self.iter_prog.finditer(self._schema)
         kwargs = {'section': 'constructors'}
         state = 'combinators'
@@ -200,5 +253,4 @@ class IRSchema:
 
             if state == 'quit':
                 return _fsm_error(i, kwargs)
-        self.print_combinators()
 

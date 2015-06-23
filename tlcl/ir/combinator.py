@@ -11,7 +11,7 @@ class IRCombinator:
     CONSTRUCTOR = _IRCombinatorKind.CONSTRUCTOR
     FUNCTION = _IRCombinatorKind.FUNCTION
 
-    def __init__(self, kind, ir_ident, number):
+    def __init__(self, kind, ir_ident, number, params=[], result_type=[]):
         self._kind = IRCombinator._IRCombinatorKind(kind)
         self._ir_ident = ir_ident
         self._number = number
