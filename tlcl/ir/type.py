@@ -17,6 +17,11 @@ class IRType:
     def identifier(self):
         return self._ir_ident.identifier
 
+    @property
+    def ir_ident(self):
+        return self._ir_ident
+    
+
     def __repr__(self):
         return '<IRType: kind={}, identifier={}>'.format(self._kind, self.identifier.full_ident)
 

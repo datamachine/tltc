@@ -11,7 +11,8 @@ template="""
 """
 
 class Python34Type:
-    def __init__(self, ir_type):
+    def __init__(self, ident, ir_type):
+        self._ident = ident
         self._ir_type = ir_type
         #self.target = target
         #self.ir_type = ir_type

@@ -1,9 +1,10 @@
 from inspect import Parameter
 
 class Python34Parameter:
-    def __init__(self, ir_param, arg_type):
-        self._ir_param = ir_param
+    def __init__(self, ident, arg_type, ir_param):
+        self._ident = ident
         self._arg_type = arg_type
+        self._ir_param = ir_param
 
     @property
     def identifier(self):

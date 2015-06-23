@@ -62,6 +62,7 @@ class _Targets:
 		type_cls = target_cls.type_cls()
 		param_cls = target_cls.param_cls()
 		combinator_cls = target_cls.combinator_cls()
+		ident_cls = target_cls.ident_cls()
 
 		target = target_cls(schema)
 
@@ -69,7 +70,7 @@ class _Targets:
 		combinators = OrderedDict()
 
 		for name, ir_type in schema.types.items():
-			tgt_type = type_cls(ir_type)
+			tgt_type = type_cls(ident_cls(ir_type.ir_ident), ir_type)
 			types[str(ir_type)] = tgt_type
 
 		for name, ir_combinator in schema.combinators.items():
@@ -79,7 +80,7 @@ class _Targets:
 				if arg_type is None:
 					arg_type = str(ir_param.arg_type)
 					print('WARNING: {} in parameter "{}"; unkown arg type: {}'.format(ir_combinator, ir_param, ir_param.arg_type), file=stderr)
-				param = param_cls(ir_param, arg_type)
+				param = param_cls(ident_cls(ir_param.ir_ident), ir_param, arg_type)
 				params.append(param)
 
 			result_type = types.get(str(ir_combinator.result_type))
@@ -88,9 +89,10 @@ class _Targets:
 				print('WARNING: {} unkown combinator result type: {}'.format(ir_combinator, result_type), file=stderr)
 
 			combinator = combinator_cls(
-				ir_combinator=ir_combinator,
+				ident=ident_cls(ir_combinator.ir_ident),
 				params=params,
-				result_type=result_type
+				result_type=result_type,
+				ir_combinator=ir_combinator
 				)
 
 			combinators[str(ir_combinator)] = combinator

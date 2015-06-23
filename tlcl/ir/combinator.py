@@ -39,6 +39,11 @@ class IRCombinator:
         return self._result_type
 
     @property
+    def ir_ident(self):
+        return self._ir_ident
+    
+
+    @property
     def lc_ident_full(self):
         return '{}#{:x}'.format(self.identifier, self.number)    
     

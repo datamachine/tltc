@@ -12,15 +12,11 @@ class {{identifier}}(TLCombinator):
 """
 
 class Python34Combinator:
-    def __init__(self, ir_combinator, params, result_type):
-        self._ir_combinator = ir_combinator
+    def __init__(self, ident, params, result_type, ir_combinator):
+        self._ident = ir_combinator.ir_ident
         self._params = params
         self._result_type = result_type
-        #self.target = target
-        #self._ir_combinator = ir_combinator
-        #self._params = None
-        #self._number = ir_combinator.number
-        #self._set_result_type()
+        self._ir_combinator = ir_combinator
 
 
     def _set_result_type(self):
