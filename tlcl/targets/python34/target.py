@@ -8,7 +8,11 @@ from collections import OrderedDict
 
 def_serialize='''
 def serialize(combinator, params):
-    c = combinator.get(combinators.number)
+    c = None
+    if type(combinator) is int:
+        c = combinators.get(combinator)
+    else:
+        c = combinator.get(combinators.number)
     if c is None:
         print('combinator "{}" does not exist'.format(combinator), file=sys.stderr)
         return None
