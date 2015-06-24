@@ -8,10 +8,10 @@ template="""
 class {identifier}:
     number = pack_number({number:#x})
     is_base = False
-    _result = namedtuple('{result_type}', [{result_type_params}])
+    _data_cls = namedtuple('{result_type}', [{result_type_params}])
 
     @staticmethod
-    def serialize(params=None):
+    def serialize(data=None):
         {serialize}
 
     @staticmethod
@@ -85,7 +85,7 @@ class Python34Combinator:
         lines = [
             'number = io_bytes.read(4)',
             'assert {}.number == number'.format(self._template_identifier()),
-            "return {0}._result(tag='{1}', number={0}.number)".format(self._template_identifier(),
+            "return {0}._data_cls(tag='{1}', number={0}.number)".format(self._template_identifier(),
                                                                   self.ident.ir_ident.ident_full)
         ]
         return '\n        '.join(lines)
@@ -109,7 +109,7 @@ class Python34Combinator:
 
             result_args.append(p)
 
-        ret_stmt = 'return {}._result('.format(self._template_identifier())
+        ret_stmt = 'return {}._data_cls('.format(self._template_identifier())
 
         result_args = [result_args[0]] + [r.rjust(len(ret_stmt) + len(r) + 8) for r in result_args[1:]]
         result_args = ',\n'.join(result_args)
@@ -118,7 +118,21 @@ class Python34Combinator:
         return ret_stmt
 
     def _template_serialize_params(self):
-        return 'None'
+        lines = []
+        lines += ['result = bytearray()']
+
+        result_args =  []
+        for param in self.params:
+            arg_type = param.arg_type
+            p = 'result += {}_c.serialize(data.{})'.format(arg_type.py3ident.lower(), param.py3ident)
+
+            result_args.append(p)
+
+        lines += result_args
+        lines += ['return bytes(result)']
+        lines = '\n        '.join(lines)
+
+        return lines
 
     def _template_serialize_no_params(self):
         return 'return {}.number'.format(self._template_identifier())
