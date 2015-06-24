@@ -70,7 +70,7 @@ class Python34Combinator:
     def _template_result_type_params(self):
         get_params = ["'{}'".format(p.py3ident) for p in self.params]
         if not get_params:
-            get_params = ["'tag'"]
+            get_params = ["'tag'", "'number'"]
         return ', '.join(get_params)
 
     #def _template_result_type_params(self):
@@ -82,8 +82,8 @@ class Python34Combinator:
 
     def _template_deserialize(self):
         if not self.params:
-            return "return {}._result(tag='{}')".format(self._template_identifier(),
-                                                self.ident.ir_ident.ident_full)
+            return "return {0}._result(tag='{1}', number={0}.number)".format(self._template_identifier(),
+                                                                      self.ident.ir_ident.ident_full)
         else:
             return 'pass'
 

@@ -105,11 +105,13 @@ def test_vector():
 def test_bool():
     io_bytes = io.BytesIO(tl.boolTrue_c.number)
     result = tl.deserialize(io_bytes)
-    assert result.tag == 'boolTrue'
+    assert result.tag == 'boolTrue', '"{} == {}"'.format(result.tag, 'boolTrue')
+    assert result.number == tl.boolTrue_c.number, '"{} == {}"'.format(result.number, tl.boolTrue_c.number)
 
     io_bytes = io.BytesIO(tl.boolFalse_c.number)
     result = tl.deserialize(io_bytes)
-    assert result.tag == 'boolFalse'
+    assert result.tag == 'boolFalse', '"{} == {}"'.format(result.tag, 'boolFalse')
+    assert result.number == tl.boolFalse_c.number, '"{} == {}"'.format(result.number, tl.boolFalse_c.number)
 
 if __name__ == '__main__':
     test_int()
