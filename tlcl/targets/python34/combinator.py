@@ -120,6 +120,7 @@ class Python34Combinator:
     def _template_serialize_params(self):
         lines = []
         lines += ['result = bytearray()']
+        lines += ['result += {}.number'.format(self._template_identifier())]
 
         result_args =  []
         for param in self.params:
