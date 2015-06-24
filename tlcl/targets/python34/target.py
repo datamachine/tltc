@@ -6,6 +6,24 @@ from .ident import Python34Identifier
 from ..targets import Target
 from collections import OrderedDict
 
+def_serialize='''
+def serialize(combinator, params):
+    c = combinator.get(combinators.number)
+    if c is None:
+        print('combinator "{}" does not exist'.format(combinator), file=sys.stderr)
+        return None
+    return c.serialize(params)
+'''
+
+def_deserialize='''
+def deserialize(io_bytes):
+    cons = combinators.get(io_bytes.read(4))
+    if cons is None:
+        print('combinator "{}" does not exist'.format(combinator), file=sys.stderr)
+        return None
+    return cons.deserialize(io_bytes)
+'''
+
 con_num_struct='''
 _pack_number_struct = Struct('<I')
 pack_number = _pack_number_struct.pack
@@ -140,8 +158,26 @@ class bytes_c:
 combinators[bytes_c.number] = bytes_c
 """
 
+vector_c="""
+class vector_c:
+    number = pack_number(0xebefb69e)
+
+    @staticmethod
+    def serialize(_bytes):
+        result = bytearray()
+
+        return bytes(result)
+
+    @staticmethod
+    def deserialize(io_bytes):
+        result = bytearray()
+
+        return result
+combinators[bytes_c.number] = bytes_c
+"""
+
 base_types=['int', 'Int', 'long', 'Long', 'double', 'Double', 'string', 'String', 'bytes', 'Bytes']
-base_templates=[con_num_struct, int_c, long_c, double_c, string_c, bytes_c]
+base_templates=[def_serialize, def_deserialize, con_num_struct, int_c, long_c, double_c, string_c, bytes_c]
 
 class Python34Target(Target):
     def __init__(self, schema, types, combinators):
