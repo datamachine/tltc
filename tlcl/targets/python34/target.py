@@ -31,8 +31,20 @@ class long_c:
 combinators[long_c.number] = long_c
 """
 
-base_types=['int', 'Int', 'long', 'Long']
-base_templates=[con_num_struct, int_c, long_c]
+double_c="""
+class double_c:
+    number = pack_number(0x2210c154)
+
+    _struct = Struct('<d')
+
+    @staticmethod
+    def deserialize(io_bytes):
+        return double_c._struct.unpack(io_bytes.read(8))[0]    
+combinators[double_c.number] = double_c
+"""
+
+base_types=['int', 'Int', 'long', 'Long', 'double', 'Double']
+base_templates=[con_num_struct, int_c, long_c, double_c]
 
 class Python34Target(Target):
     def __init__(self, schema, types, combinators):
