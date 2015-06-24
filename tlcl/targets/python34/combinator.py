@@ -5,12 +5,16 @@ from .ident import Python34Identifier
 
 template="""
 class {identifier}:
-    _number = {number:#x}
+    number = pack_number({number:#x})
+    _result = namedtuple('{result_type}', [{result_type_params}])
 
     @staticmethod
     def deserialize(io_bytes):
-        return io_bytes
+        result = bytearray()
+        return result        
+combinators[{identifier}.number] = {identifier}
 """
+
 
 class Python34Combinator:
     def __init__(self, ident, params, result_type, ir_combinator):
@@ -31,6 +35,10 @@ class Python34Combinator:
     @property
     def identifier(self):
         return self._ident.py3ident
+
+    @property
+    def ident(self):
+        return self._ident
 
     @property
     def number(self):
@@ -59,6 +67,14 @@ class Python34Combinator:
         set_params = ['''setattr(result, '{0}', {0})'''.format(p.py3ident) for p in self.params]
         return '\n        '.join(set_params)
 
+    def _template_result_type_params(self):
+        get_params = ["'{}'".format(p.py3ident) for p in self.params]
+        return ', '.join(get_params)
+
+    #def _template_result_type_params(self):
+    #    get_params = ["_{0} = combinators[{number:#x}]".format(p.py3ident) for p in self.params]
+    #    return ', '.join(get_params)
+
     def _template_result_type(self):
         return self.result_type.py3ident
 
@@ -70,8 +86,7 @@ class Python34Combinator:
         return template.format(
             identifier=self._template_identifier(), 
             number=self.number, 
-            get_params=self._template_get_params(),
-            set_params=self._template_set_params(),
+            result_type_params=self._template_result_type_params(),
             result_type=self._template_result_type()
             )
 

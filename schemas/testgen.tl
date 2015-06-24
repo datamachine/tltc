@@ -435,3 +435,6 @@ messages.allStickersNotModified#e86602c3 = messages.AllStickers;
 messages.allStickers#dcef3102 hash:string packs:Vector<StickerPack> documents:Vector<Document> = messages.AllStickers;
 
 disabledFeature#ae636f24 feature:string description:string = DisabledFeature;
+
+
+users.getUsers#d91a548 id:Vector<InputUser> = Vector<User>;

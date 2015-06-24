@@ -7,11 +7,14 @@ __all__ = ('Python34Type')
 
 template="""
 class {identifier}:
-    def __init__({init_sig}):
-        {member_init}
+    def __init__(self):
+        pass
 
+    @staticmethod
     def deserialize(io_bytes):
+        print('{identifier}')
         return io_bytes
+
 """
 
 class Python34Type:
@@ -37,7 +40,7 @@ class Python34Type:
             ident = self._ident.py3ident
             ident = ident[0].upper() + ident[1:]
 
-        ident = '{}_t'.format(ident)
+        ident = '{}'.format(ident)
 
         Python34Identifier.validate(ident)
 

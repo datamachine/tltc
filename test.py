@@ -1,19 +1,37 @@
 #!/usr/bin/env python3.4
 
-from tlcl.targets.python34.base import *
-from tlcl.targets.python34.builtin import *
+import io
+import py34types as p3
+
+def deserialize(io_bytes):
+    constructor = io_bytes.read(4)
+    cons = p3.combinators[constructor]
+    return cons.deserialize(io_bytes)
+
+
+def test_long():
+    _bytes = bytearray()
+    _bytes += int(0xa8509bda).to_bytes(4, byteorder='little')
+    _bytes += int(1234).to_bytes(4, byteorder='little')
+
+    io_bytes = io.BytesIO(_bytes)
+    result = deserialize(io_bytes)
+
+    print(io_bytes.read())
+    print(result)
+
+def test_int():
+    _bytes = bytearray()
+    _bytes += int(0xa8509bda).to_bytes(4, byteorder='little')
+    _bytes += int(1234).to_bytes(4, byteorder='little')
+
+    io_bytes = io.BytesIO(_bytes)
+    result = deserialize(io_bytes)
+
+    print(io_bytes.read())
+    print(result)
+
+
 
 if __name__ == '__main__':
-    i = Int(0x1020abcd)
-    print('{:x}'.format(i))
-    print(repr(i))
-
-    s = String('test')
-    print(s.serialize())
-
-    _bool = Bool(True)
-    print('boolTrue:', _bool.serialize())
-
-    v = Vector(Bool, [True, False, True])
-    print(v.serialize())
-    print(v.pseudo_serialize())
+    test_int()

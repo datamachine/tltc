@@ -8,10 +8,11 @@ class IRIdentifier:
     TYPE = _IdentifierKind.TYPE
     TEMPLATE = _IdentifierKind.TEMPLATE
 
-    def __init__(self, kind, namespace, ident):
+    def __init__(self, kind, namespace, ident, vector_type=None):
         self._kind = IRIdentifier._IdentifierKind(kind)
         self._namespace = namespace
         self._ident = ident
+        self._vector_type = vector_type
 
     def is_bare(self):
         return self._ident.islower()
@@ -47,8 +48,10 @@ class IRIdentifier:
 
     @property
     def ident_full(self):
+        fmt = '{ident}' if self._vector_type is None else '{ident}<{vector_type}>'
+        ident = fmt.format(ident=self.ident, vector_type=self._vector_type)
         fmt = '{ident}' if self.namespace is None else '{namespace}.{ident}'
-        return fmt.format(namespace=self.namespace, ident=self.ident)
+        return fmt.format(namespace=self.namespace, ident=ident)
 
     def __str__(self):
         return self.ident_full

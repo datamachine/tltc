@@ -3,6 +3,7 @@ import re
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 import zlib
+from pprint import PrettyPrinter
 
 from ..syntax.tlsyntax import TLSyntax
 from .type import IRType
@@ -109,7 +110,8 @@ class IRSchema:
             '=\s*'
             '(?P<combinator_result_type>'
                 '(?:(?P<combinator_result_type_namespace>{lc-ident-ns})\.|)'
-                '(?P<combinator_result_type_identifier>[^;]+)'
+                '(?P<combinator_result_type_identifier>Vector t|Vector|[^;]+)'
+                '(:?<(?P<result_vector_type>.*?)>|)'
             ')'.format(**TLSyntax.TL),
 
             # end of constructor
@@ -124,6 +126,7 @@ class IRSchema:
             # catch anything else
             '(?P<invalid_syntax>\S+)'
         ]
+        #print(tokens[3], file=sys.stderr)
         self.iter_expr = '(?:{})'.format('|'.join(tokens))
         self.iter_prog = re.compile(self.iter_expr)
 
@@ -144,9 +147,9 @@ class IRSchema:
        
         return combinator
 
-    def create_new_type(self, namespace, ident):
-        identifier = IRIdentifier(IRIdentifier.TYPE, namespace, ident)
-        ir_type = IRType(IRType.BOXED, identifier)
+    def create_new_type(self, namespace, ident, vector_type=None):
+        identifier = IRIdentifier(IRIdentifier.TYPE, namespace, ident, vector_type)
+        ir_type = IRType(IRType.BOXED, identifier, vector_type)
         self.types[identifier] = ir_type
         return ir_type
 
@@ -221,10 +224,15 @@ class IRSchema:
             return 'error', {'groups':groups}
 
         t = self.types.get(groups['combinator_result_type'], None)
+        #print (groups['combinator_result_type'])
         if t is None:
             namespace = groups['combinator_result_type_namespace']
             ident = groups['combinator_result_type_identifier']
-            t = self.create_new_type(namespace, ident)
+            vector_type = None
+            if groups['result_vector_type']:
+                print(groups['result_vector_type'], file=sys.stderr)
+                vector_type = self.types.get(groups['result_vector_type'])
+            t = self.create_new_type(namespace, ident, vector_type)
 
         combinator.set_result_type(t)
 
@@ -237,7 +245,16 @@ class IRSchema:
         return 'combinators', {'section':section}
 
     def _fsm_error(self, matches, *args, **kwargs):
-        raise Exception('ERROR:\t{}:\n\t{}\n\t{}'.format(matches, args, kwargs))
+        pp = PrettyPrinter(indent=4, stream=sys.stderr)
+        matches = {k:v for k,v in matches.items() if v is not None}
+        if 'groups' in kwargs:
+            groups = {k:v for k,v in kwargs['groups'].items() if v is not None}
+            del kwargs['groups']
+            pp.pprint(groups)
+        
+        pp.pprint(matches)
+        pp.pprint(kwargs)
+        raise Exception('ERROR: in \'{}\':'.format(''))
 
     def print_combinators(self, func=repr):
         for name, combinator in self.combinators.items():

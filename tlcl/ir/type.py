@@ -12,6 +12,7 @@ class IRType:
         self._ir_ident = ir_ident
         self.constructors = []
         self.functions = []
+        self._vector_type = vector_type
 
     @property
     def ident_full(self):
