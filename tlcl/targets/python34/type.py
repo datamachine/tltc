@@ -30,6 +30,11 @@ class Python34Type:
             self._members[p.py3ident] = p
 
     @property
+    def ident(self):
+        return self._ident
+    
+
+    @property
     def py3ident(self):
         ident = self._ident.ir_ident.ident_full
         if ident == 'Vector t':

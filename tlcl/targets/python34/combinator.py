@@ -2,6 +2,7 @@ from collections import OrderedDict
 from inspect import Signature, Parameter
 from .param import Python34Parameter
 from .ident import Python34Identifier
+import sys
 
 template="""
 class {identifier}:
@@ -83,19 +84,40 @@ class Python34Combinator:
 
     def _template_result_type(self):
         return self.result_type.py3ident
+    
+    def _template_deserialize_params(self):
+        return 'None'
+
+    def _template_deserialize_no_params(self):
+        lines = [
+            'number = io_bytes.read(4)',
+            'assert {}.number == number'.format(self._template_identifier()),
+            "return {0}._result(tag='{1}', number={0}.number)".format(self._template_identifier(),
+                                                                  self.ident.ir_ident.ident_full)
+        ]
+        return '\n        '.join(lines)
 
     def _template_deserialize(self):
-        if not self.params:
-            return "return {0}._result(tag='{1}', number={0}.number)".format(self._template_identifier(),
-                                                                      self.ident.ir_ident.ident_full)
+        if self.params:
+            return self._template_deserialize_params()
         else:
-            return 'None'
+            return self._template_deserialize_no_params()
+
+    def _template_serialize_params(self):
+        params =  []
+        for param in self.params:
+            p = '{}'.format(param.py3ident)
+            params.append(p)
+        return 'None'
+
+    def _template_serialize_no_params(self):
+        return 'return {}.number'.format(self._template_identifier())
 
     def _template_serialize(self):
-        if not self.params:
-            return 'return {}.number'.format(self._template_identifier())
+        if self.params:
+            return self._template_serialize_params()
         else:
-            return 'None'
+            return self._template_serialize_no_params()
 
     @property
     def result_type(self):
