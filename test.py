@@ -10,26 +10,28 @@ def deserialize(io_bytes):
 
 
 def test_long():
-    _bytes = bytearray()
-    _bytes += py3.long_c.number
-    _bytes += int(12345678).to_bytes(8, byteorder='little')
+    val = int(12345678)
+
+    _bytes = bytearray(py3.long_c.number)
+    _bytes += val.to_bytes(8, byteorder='little')
 
     io_bytes = io.BytesIO(_bytes)
     result = deserialize(io_bytes)
 
-    print(io_bytes.read())
-    print(result)
+    assert len(io_bytes.read()) == 0, 'Failed to read all the data in test_long'
+    assert val == result, 'Error deserializing int(%d)' %val
 
 def test_int():
-    _bytes = bytearray()
-    _bytes += py3.int_c.number
-    _bytes += int(1234).to_bytes(4, byteorder='little')
+    val = int(1234)
+
+    _bytes = bytearray(py3.int_c.number)
+    _bytes += val.to_bytes(4, byteorder='little')
 
     io_bytes = io.BytesIO(_bytes)
     result = deserialize(io_bytes)
 
-    print(io_bytes.read())
-    print(result)
+    assert len(io_bytes.read()) == 0, 'Failed to read all the data in test_long'
+    assert val == result, 'Error deserializing int(%d)' %val
 
 
 
