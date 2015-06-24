@@ -68,8 +68,29 @@ class string_c:
 combinators[string_c.number] = string_c
 """
 
-base_types=['int', 'Int', 'long', 'Long', 'double', 'Double', 'string', 'String']
-base_templates=[con_num_struct, int_c, long_c, double_c, string_c]
+bytes_c="""
+class bytes_c:
+    number = pack_number(0xebefb69e)
+
+    @staticmethod
+    def deserialize(io_bytes):
+        size = int.from_bytes(io_bytes.read(1), byteorder='little')
+        pfx_bytes = 1
+        if size == 254:
+            size = int.from_bytes(io_bytes.read(3), byteorder='little')
+            pfx_bytes = 4
+
+        result = io_bytes.read(size)
+
+        remainder = 4 - (pfx_bytes + size)%4
+        io_bytes.read(remainder)
+
+        return result
+combinators[bytes_c.number] = bytes_c
+"""
+
+base_types=['int', 'Int', 'long', 'Long', 'double', 'Double', 'string', 'String', 'bytes', 'Bytes']
+base_templates=[con_num_struct, int_c, long_c, double_c, string_c, bytes_c]
 
 class Python34Target(Target):
     def __init__(self, schema, types, combinators):

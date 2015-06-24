@@ -17,7 +17,7 @@ def test_int():
     io_bytes = io.BytesIO(_bytes)
     result = deserialize(io_bytes)
 
-    assert len(io_bytes.read()) == 0, 'Failed to read all the data in test_int'
+    assert len(io_bytes.read()) == 0, 'Failed to read all the data'
     assert val == result, 'Error deserializing int(%d)' %val
 
 
@@ -30,7 +30,7 @@ def test_long():
     io_bytes = io.BytesIO(_bytes)
     result = deserialize(io_bytes)
 
-    assert len(io_bytes.read()) == 0, 'Failed to read all the data in test_long'
+    assert len(io_bytes.read()) == 0, 'Failed to read all the data'
     assert val == result, 'Error deserializing int(%d)' %val
 
 def test_double():
@@ -42,18 +42,32 @@ def test_double():
     io_bytes = io.BytesIO(_bytes)
     result = deserialize(io_bytes)
 
-    assert len(io_bytes.read()) == 0, 'Failed to read all the data in test_double'
+    assert len(io_bytes.read()) == 0, 'Failed to read all the data'
     assert val == result, 'Error deserializing float(%f)' %val
 
 def test_string():
+    val = 'Peter'
+
     _bytes = bytearray(py3.string_c.number)
-    _bytes += b'\x05Peter\x00\x00'
+    _bytes += b'\x05' + val.encode() + b'\x00\x00'
 
     io_bytes = io.BytesIO(_bytes)
     result = deserialize(io_bytes)
 
-    assert len(io_bytes.read()) == 0, 'Failed to read all the data in test_string'
+    assert len(io_bytes.read()) == 0, 'Failed to read all the data'
     assert result == 'Peter', 'Error reading %s' %_bytes
+
+def test_bytes():
+    val = b'Parker'
+
+    _bytes = bytearray(py3.bytes_c.number)
+    _bytes += b'\x06' + val + b'\x00'
+
+    io_bytes = io.BytesIO(_bytes)
+    result = deserialize(io_bytes)
+
+    assert len(io_bytes.read()) == 0, 'Failed to read all the data'
+    assert result == val, 'Error reading %s' %_bytes
 
 if __name__ == '__main__':
     test_int()
