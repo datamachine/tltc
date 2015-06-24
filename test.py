@@ -77,9 +77,36 @@ def test_bytes():
     assert result == b'\x0FJordan-Martinez', 'failed to serialize bytes %s' %result
     assert len(result)%4 == 0, 'bytes are not properly aligned'
 
+def test_vector():
+    _bytes = bytearray(tl.vector_c.number)
+    _bytes += int(5).to_bytes(4, byteorder='little')
+    _bytes += int(10).to_bytes(4, byteorder='little')
+    _bytes += int(20).to_bytes(4, byteorder='little')
+    _bytes += int(30).to_bytes(4, byteorder='little')
+    _bytes += int(40).to_bytes(4, byteorder='little')
+    _bytes += int(50).to_bytes(4, byteorder='little')
+
+    io_bytes = io.BytesIO(_bytes)
+    result = tl.deserialize(io_bytes, tl.int_c)
+
+    assert result == [10, 20, 30, 40, 50]
+
+    val = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    result = tl.serialize(tl.vector_c, val, tl.int_c)
+
+    ref = b'\x15\xC4\xB5\x1C\x0A\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00\x04\x00\x00\x00\x05\x00\x00\x00\x06\x00\x00\x00\x07\x00\x00\x00\x08\x00\x00\x00\x09\x00\x00\x00\x0A\x00\x00\x00'
+
+    assert result == ref, 'incorrect serialization'
+
+    io_bytes = io.BytesIO(result)
+    result = tl.deserialize(io_bytes, tl.int_c)
+
+    assert result == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
 if __name__ == '__main__':
     test_int()
     test_long()
     test_double()
     test_string()
     test_bytes()
+    test_vector()

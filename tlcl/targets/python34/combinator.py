@@ -6,6 +6,7 @@ from .ident import Python34Identifier
 template="""
 class {identifier}:
     number = pack_number({number:#x})
+    is_base = False
     _result = namedtuple('{result_type}', [{result_type_params}])
 
     @staticmethod

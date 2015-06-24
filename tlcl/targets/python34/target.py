@@ -7,7 +7,7 @@ from ..targets import Target
 from collections import OrderedDict
 
 def_serialize='''
-def serialize(combinator, params):
+def serialize(combinator, *args, **kwargs):
     c = None
     if type(combinator) is int:
         c = combinators.get(combinator)
@@ -16,16 +16,16 @@ def serialize(combinator, params):
     if c is None:
         print('combinator "{}" does not exist'.format(combinator), file=sys.stderr)
         return None
-    return c.serialize(params)
+    return c.serialize(*args, **kwargs)
 '''
 
 def_deserialize='''
-def deserialize(io_bytes):
+def deserialize(io_bytes, *args, **kwargs):
     cons = combinators.get(io_bytes.read(4))
     if cons is None:
         print('combinator "{}" does not exist'.format(combinator), file=sys.stderr)
         return None
-    return cons.deserialize(io_bytes)
+    return cons.deserialize(io_bytes, *args, **kwargs)
 '''
 
 con_num_struct='''
@@ -36,6 +36,7 @@ pack_number = _pack_number_struct.pack
 int_c="""
 class int_c:
     number = pack_number(0xa8509bda)
+    is_base = True
 
     _struct = Struct('<i')
 
@@ -52,6 +53,7 @@ combinators[int_c.number] = int_c
 long_c="""
 class long_c:
     number = pack_number(0x22076cba)
+    is_base = True
 
     _struct = Struct('<q')
 
@@ -68,6 +70,7 @@ combinators[long_c.number] = long_c
 double_c="""
 class double_c:
     number = pack_number(0x2210c154)
+    is_base = True
 
     _struct = Struct('<d')
 
@@ -84,6 +87,7 @@ combinators[double_c.number] = double_c
 string_c="""
 class string_c:
     number = pack_number(0xb5286e24)
+    is_base = True
 
     @staticmethod
     def serialize(string):
@@ -126,6 +130,7 @@ combinators[string_c.number] = string_c
 bytes_c="""
 class bytes_c:
     number = pack_number(0xebefb69e)
+    is_base = True
 
     @staticmethod
     def serialize(_bytes):
@@ -164,24 +169,37 @@ combinators[bytes_c.number] = bytes_c
 
 vector_c="""
 class vector_c:
-    number = pack_number(0xebefb69e)
+    number = pack_number(0x1cb5c415)
+    is_base = True
 
     @staticmethod
-    def serialize(_bytes):
-        result = bytearray()
-
+    def serialize(iterable, vector_type):
+        result = bytearray(vector_c.number)
+        result += len(iterable).to_bytes(4, byteorder='little')
+        for i in iterable:
+            if not vector_type.is_base:
+                result += vector_type.number
+            result += vector_type.serialize(i)
         return bytes(result)
 
     @staticmethod
-    def deserialize(io_bytes):
-        result = bytearray()
-
-        return result
-combinators[bytes_c.number] = bytes_c
+    def deserialize(io_bytes, vector_type=None):
+        count = int.from_bytes(io_bytes.read(4), byteorder='little')
+        items = []
+        cons = None
+        if vector_type is not None:
+            cons = vector_type
+        for i in range(count):
+            if vector_type is None:
+                cnum = int.from_bytes(io_bytes.read(4), byteorder='little')
+                cons = combinators.get(cnum) 
+            items.append(cons.deserialize(io_bytes))
+        return items
+combinators[vector_c.number] = vector_c
 """
 
-base_types=['int', 'Int', 'long', 'Long', 'double', 'Double', 'string', 'String', 'bytes', 'Bytes']
-base_templates=[def_serialize, def_deserialize, con_num_struct, int_c, long_c, double_c, string_c, bytes_c]
+base_types=['int', 'Int', 'long', 'Long', 'double', 'Double', 'string', 'String', 'bytes', 'Bytes', 'vector']
+base_templates=[def_serialize, def_deserialize, con_num_struct, int_c, long_c, double_c, string_c, bytes_c, vector_c]
 
 class Python34Target(Target):
     def __init__(self, schema, types, combinators):
