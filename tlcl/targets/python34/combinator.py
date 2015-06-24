@@ -97,27 +97,25 @@ class Python34Combinator:
             return self._template_deserialize_no_params()
 
     def _template_deserialize_params(self):
-        lines =  []
+
+        result_args =  []
         for param in self.params:
             arg_type = param.arg_type
-            p = 'raise Exception()'
+            p = 'raise Exception("unimplemented")'
             if arg_type.py3ident in ['Int', 'Long', 'Double', 'String', 'Bytes']:
-                p = '_{} = {}_c.deserialize(io_bytes)'.format(param.py3ident, arg_type.py3ident.lower())
+                p = '{} = {}_c.deserialize(io_bytes)'.format(param.py3ident, arg_type.py3ident.lower())
             else:
-                p = '_{} = deserialize(io_bytes)'.format(param.py3ident)
+                p = '{} = deserialize(io_bytes)'.format(param.py3ident)
 
-            lines.append(p)
+            result_args.append(p)
 
         ret_stmt = 'return {}._result('.format(self._template_identifier())
-        padding = len(ret_stmt)
-        result_args = ['{0}=_{0}'.format(p.py3ident) for p in self.params]
-        result_args = [result_args[0]] + [r.rjust(padding + len(r) + 8) for r in result_args[1:]]
+
+        result_args = [result_args[0]] + [r.rjust(len(ret_stmt) + len(r) + 8) for r in result_args[1:]]
         result_args = ',\n'.join(result_args)
         ret_stmt = '{}{})'.format(ret_stmt, result_args)
 
-        lines.append(ret_stmt)
-
-        return '\n        '.join(lines)
+        return ret_stmt
 
     def _template_serialize_params(self):
         return 'None'
