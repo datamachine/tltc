@@ -436,5 +436,142 @@ messages.allStickers#dcef3102 hash:string packs:Vector<StickerPack> documents:Ve
 
 disabledFeature#ae636f24 feature:string description:string = DisabledFeature;
 
+---functions---
+
+invokeAfterMsg#cb9f372d {X:Type} msg_id:long query:!X = X;
+
+invokeAfterMsgs#3dc4b4f0 {X:Type} msg_ids:Vector<long> query:!X = X;
+
+auth.checkPhone#6fe51dfb phone_number:string = auth.CheckedPhone;
+auth.sendCode#768d5f4d phone_number:string sms_type:int api_id:int api_hash:string lang_code:string = auth.SentCode;
+auth.sendCall#3c51564 phone_number:string phone_code_hash:string = Bool;
+auth.signUp#1b067634 phone_number:string phone_code_hash:string phone_code:string first_name:string last_name:string = auth.Authorization;
+auth.signIn#bcd51581 phone_number:string phone_code_hash:string phone_code:string = auth.Authorization;
+auth.logOut#5717da40 = Bool;
+auth.resetAuthorizations#9fab0d1a = Bool;
+auth.sendInvites#771c1d97 phone_numbers:Vector<string> message:string = Bool;
+auth.exportAuthorization#e5bfffcd dc_id:int = auth.ExportedAuthorization;
+auth.importAuthorization#e3ef9613 id:int bytes:bytes = auth.Authorization;
+auth.bindTempAuthKey#cdd42a05 perm_auth_key_id:long nonce:long expires_at:int encrypted_message:bytes = Bool;
+
+account.registerDevice#446c712c token_type:int token:string device_model:string system_version:string app_version:string app_sandbox:Bool lang_code:string = Bool;
+account.unregisterDevice#65c55b40 token_type:int token:string = Bool;
+account.updateNotifySettings#84be5b93 peer:InputNotifyPeer settings:InputPeerNotifySettings = Bool;
+account.getNotifySettings#12b3ad31 peer:InputNotifyPeer = PeerNotifySettings;
+account.resetNotifySettings#db7e1747 = Bool;
+account.updateProfile#f0888d68 first_name:string last_name:string = User;
+account.updateStatus#6628562c offline:Bool = Bool;
+account.getWallPapers#c04cfac2 = Vector<WallPaper>;
 
 users.getUsers#d91a548 id:Vector<InputUser> = Vector<User>;
+users.getFullUser#ca30a5b1 id:InputUser = UserFull;
+
+contacts.getStatuses#c4a353ee = Vector<ContactStatus>;
+contacts.getContacts#22c6aa08 hash:string = contacts.Contacts;
+contacts.importContacts#da30b32d contacts:Vector<InputContact> replace:Bool = contacts.ImportedContacts;
+contacts.getSuggested#cd773428 limit:int = contacts.Suggested;
+contacts.deleteContact#8e953744 id:InputUser = contacts.Link;
+contacts.deleteContacts#59ab389e id:Vector<InputUser> = Bool;
+contacts.block#332b49fc id:InputUser = Bool;
+contacts.unblock#e54100bd id:InputUser = Bool;
+contacts.getBlocked#f57c350f offset:int limit:int = contacts.Blocked;
+contacts.exportCard#84e53737 = Vector<int>;
+contacts.importCard#4fe196fe export_card:Vector<int> = User;
+
+messages.getMessages#4222fa74 id:Vector<int> = messages.Messages;
+messages.getDialogs#eccf1df6 offset:int max_id:int limit:int = messages.Dialogs;
+messages.getHistory#92a1df2f peer:InputPeer offset:int max_id:int limit:int = messages.Messages;
+messages.search#7e9f2ab peer:InputPeer q:string filter:MessagesFilter min_date:int max_date:int offset:int max_id:int limit:int = messages.Messages;
+messages.readHistory#eed884c6 peer:InputPeer max_id:int offset:int read_contents:Bool = messages.AffectedHistory;
+messages.deleteHistory#f4f8fb61 peer:InputPeer offset:int = messages.AffectedHistory;
+messages.deleteMessages#14f2dd0a id:Vector<int> = Vector<int>;
+messages.receivedMessages#28abcb68 max_id:int = Vector<int>;
+messages.setTyping#a3825e50 peer:InputPeer action:SendMessageAction = Bool;
+messages.sendMessage#4cde0aab peer:InputPeer message:string random_id:long = messages.SentMessage;
+messages.sendMedia#a3c85d76 peer:InputPeer media:InputMedia random_id:long = messages.StatedMessage;
+messages.forwardMessages#514cd10f peer:InputPeer id:Vector<int> = messages.StatedMessages;
+messages.getChats#3c6aa187 id:Vector<int> = messages.Chats;
+messages.getFullChat#3b831c66 chat_id:int = messages.ChatFull;
+messages.editChatTitle#b4bc68b5 chat_id:int title:string = messages.StatedMessage;
+messages.editChatPhoto#d881821d chat_id:int photo:InputChatPhoto = messages.StatedMessage;
+messages.addChatUser#2ee9ee9e chat_id:int user_id:InputUser fwd_limit:int = messages.StatedMessage;
+messages.deleteChatUser#c3c5cd23 chat_id:int user_id:InputUser = messages.StatedMessage;
+messages.createChat#419d9aee users:Vector<InputUser> title:string = messages.StatedMessage;
+
+updates.getState#edd4882a = updates.State;
+updates.getDifference#a041495 pts:int date:int qts:int = updates.Difference;
+
+photos.updateProfilePhoto#eef579a0 id:InputPhoto crop:InputPhotoCrop = UserProfilePhoto;
+photos.uploadProfilePhoto#d50f9c88 file:InputFile caption:string geo_point:InputGeoPoint crop:InputPhotoCrop = photos.Photo;
+photos.deletePhotos#87cf7f2f id:Vector<InputPhoto> = Vector<long>;
+
+upload.saveFilePart#b304a621 file_id:long file_part:int bytes:bytes = Bool;
+upload.getFile#e3a6cfb5 location:InputFileLocation offset:int limit:int = upload.File;
+
+help.getConfig#c4f9186b = Config;
+help.getNearestDc#1fb33026 = NearestDc;
+help.getAppUpdate#c812ac7e device_model:string system_version:string app_version:string lang_code:string = help.AppUpdate;
+help.saveAppLog#6f02f748 events:Vector<InputAppEvent> = Bool;
+help.getInviteText#a4a95186 lang_code:string = help.InviteText;
+
+photos.getUserPhotos#b7ee553c user_id:InputUser offset:int max_id:int limit:int = photos.Photos;
+
+messages.forwardMessage#3f3f4f2 peer:InputPeer id:int random_id:long = messages.StatedMessage;
+messages.sendBroadcast#41bb0972 contacts:Vector<InputUser> message:string media:InputMedia = messages.StatedMessages;
+
+geochats.getLocated#7f192d8f geo_point:InputGeoPoint radius:int limit:int = geochats.Located;
+geochats.getRecents#e1427e6f offset:int limit:int = geochats.Messages;
+geochats.checkin#55b3e8fb peer:InputGeoChat = geochats.StatedMessage;
+geochats.getFullChat#6722dd6f peer:InputGeoChat = messages.ChatFull;
+geochats.editChatTitle#4c8e2273 peer:InputGeoChat title:string address:string = geochats.StatedMessage;
+geochats.editChatPhoto#35d81a95 peer:InputGeoChat photo:InputChatPhoto = geochats.StatedMessage;
+geochats.search#cfcdc44d peer:InputGeoChat q:string filter:MessagesFilter min_date:int max_date:int offset:int max_id:int limit:int = geochats.Messages;
+geochats.getHistory#b53f7a68 peer:InputGeoChat offset:int max_id:int limit:int = geochats.Messages;
+geochats.setTyping#8b8a729 peer:InputGeoChat typing:Bool = Bool;
+geochats.sendMessage#61b0044 peer:InputGeoChat message:string random_id:long = geochats.StatedMessage;
+geochats.sendMedia#b8f0deff peer:InputGeoChat media:InputMedia random_id:long = geochats.StatedMessage;
+geochats.createGeoChat#e092e16 title:string geo_point:InputGeoPoint address:string venue:string = geochats.StatedMessage;
+
+messages.getDhConfig#26cf8950 version:int random_length:int = messages.DhConfig;
+messages.requestEncryption#f64daf43 user_id:InputUser random_id:int g_a:bytes = EncryptedChat;
+messages.acceptEncryption#3dbc0415 peer:InputEncryptedChat g_b:bytes key_fingerprint:long = EncryptedChat;
+messages.discardEncryption#edd923c5 chat_id:int = Bool;
+messages.setEncryptedTyping#791451ed peer:InputEncryptedChat typing:Bool = Bool;
+messages.readEncryptedHistory#7f4b690a peer:InputEncryptedChat max_date:int = Bool;
+messages.sendEncrypted#a9776773 peer:InputEncryptedChat random_id:long data:bytes = messages.SentEncryptedMessage;
+messages.sendEncryptedFile#9a901b66 peer:InputEncryptedChat random_id:long data:bytes file:InputEncryptedFile = messages.SentEncryptedMessage;
+messages.sendEncryptedService#32d439a4 peer:InputEncryptedChat random_id:long data:bytes = messages.SentEncryptedMessage;
+messages.receivedQueue#55a5bb66 max_qts:int = Vector<long>;
+
+upload.saveBigFilePart#de7b673d file_id:long file_part:int file_total_parts:int bytes:bytes = Bool;
+
+initConnection#69796de9 {X:Type} api_id:int device_model:string system_version:string app_version:string lang_code:string query:!X = X;
+
+help.getSupport#9cdf08cd = help.Support;
+
+auth.sendSms#da9f3e8 phone_number:string phone_code_hash:string = Bool;
+
+messages.readMessageContents#354b5bc2 id:Vector<int> = Vector<int>;
+
+account.checkUsername#2714d86c username:string = Bool;
+account.updateUsername#3e0bdd7c username:string = User;
+
+contacts.search#11f812d8 q:string limit:int = contacts.Found;
+
+account.getPrivacy#dadbc950 key:InputPrivacyKey = account.PrivacyRules;
+account.setPrivacy#c9f81ce8 key:InputPrivacyKey rules:Vector<InputPrivacyRule> = account.PrivacyRules;
+account.deleteAccount#418d4e0b reason:string = Bool;
+account.getAccountTTL#8fc711d = AccountDaysTTL;
+account.setAccountTTL#2442485e ttl:AccountDaysTTL = Bool;
+
+invokeWithLayer#da9b0d0d {X:Type} layer:int query:!X = X;
+
+contacts.resolveUsername#bf0131c username:string = User;
+
+account.sendChangePhoneCode#a407a8f4 phone_number:string = account.SentChangePhoneCode;
+account.changePhone#70c32edb phone_number:string phone_code_hash:string phone_code:string = User;
+
+messages.getStickers#ae22e045 emoticon:string hash:string = messages.Stickers;
+messages.getAllStickers#aa3bc868 hash:string = messages.AllStickers;
+
+account.updateDeviceLocked#38df3532 period:int = Bool;
