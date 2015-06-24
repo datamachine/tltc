@@ -42,11 +42,9 @@ def test_double():
     assert val == result, 'Error deserializing float(%f)' %val
 
 def test_string():
-    str_num = py3.string_c.number
-
     val = 'Peter'
 
-    _bytes = bytearray(str_num)
+    _bytes = bytearray(py3.string_c.number)
     _bytes += b'\x05' + val.encode() + b'\x00\x00'
 
     io_bytes = io.BytesIO(_bytes)
@@ -56,14 +54,12 @@ def test_string():
     assert result == 'Peter', 'Error reading %s' %_bytes
 
     val = 'Michael'
-    result = py3.combinators[str_num].serialize(val)
+    result = py3.serialize(py3.string_c, val)
 
     assert result == b'\x07Michael', 'failed to serialize string'
     assert len(result)%4 == 0, 'string is not properly aligned'
 
 def test_bytes():
-    bytes_num = py3.bytes_c.number
-
     val = b'Parker'
 
     _bytes = bytearray(py3.bytes_c.number)
@@ -76,7 +72,7 @@ def test_bytes():
     assert result == val, 'Error reading %s' %_bytes
 
     val = b'Jordan-Martinez'
-    result = py3.combinators[bytes_num].serialize(val)
+    result = py3.serialize(py3.bytes_c, val)
 
     assert result == b'\x0FJordan-Martinez', 'failed to serialize bytes %s' %result
     assert len(result)%4 == 0, 'bytes are not properly aligned'

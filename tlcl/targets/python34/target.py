@@ -12,7 +12,7 @@ def serialize(combinator, params):
     if type(combinator) is int:
         c = combinators.get(combinator)
     else:
-        c = combinator.get(combinators.number)
+        c = combinators.get(combinator.number)
     if c is None:
         print('combinator "{}" does not exist'.format(combinator), file=sys.stderr)
         return None
