@@ -116,6 +116,13 @@ def test_bool():
     print(tl.serialize(tl.boolTrue_c))
     print(tl.serialize(tl.boolFalse_c))
 
+def test_general():
+    data = tl.inputUserForeign_c._data_cls(user_id=1234, access_hash=0xDEADBEAF)
+    print(data)
+
+    serial_data = tl.inputUserForeign_c.serialize(data)
+    print(serial_data)
+
 if __name__ == '__main__':
     test_int()
     test_long()
@@ -124,3 +131,4 @@ if __name__ == '__main__':
     test_bytes()
     test_vector()
     test_bool()
+    test_general()
