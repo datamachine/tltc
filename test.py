@@ -45,7 +45,18 @@ def test_double():
     assert len(io_bytes.read()) == 0, 'Failed to read all the data in test_double'
     assert val == result, 'Error deserializing float(%f)' %val
 
+def test_string():
+    _bytes = bytearray(py3.string_c.number)
+    _bytes += b'\x05Peter\x00\x00'
+
+    io_bytes = io.BytesIO(_bytes)
+    result = deserialize(io_bytes)
+
+    assert len(io_bytes.read()) == 0, 'Failed to read all the data in test_string'
+    assert result == 'Peter', 'Error reading %s' %_bytes
+
 if __name__ == '__main__':
     test_int()
     test_long()
     test_double()
+    test_string()

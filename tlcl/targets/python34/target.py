@@ -7,17 +7,19 @@ from ..targets import Target
 from collections import OrderedDict
 
 con_num_struct='''
-def pack_number(num):
-    return int(num).to_bytes(4, byteorder='little')
+_pack_number_struct = Struct('<I')
+pack_number = _pack_number_struct.pack
 '''
 
 int_c="""
 class int_c:
     number = pack_number(0xa8509bda)
 
+    _struct = Struct('<i')
+
     @staticmethod
     def deserialize(io_bytes):
-        return int.from_bytes(io_bytes.read(4), byteorder='little')      
+        return int_c._struct.unpack(io_bytes.read(4))[0]
 combinators[int_c.number] = int_c
 """
 
@@ -25,9 +27,11 @@ long_c="""
 class long_c:
     number = pack_number(0x22076cba)
 
+    _struct = Struct('<q')
+
     @staticmethod
     def deserialize(io_bytes):
-        return int.from_bytes(io_bytes.read(8), byteorder='little')      
+        return long_c._struct.unpack(io_bytes.read(8))[0]     
 combinators[long_c.number] = long_c
 """
 
@@ -43,8 +47,29 @@ class double_c:
 combinators[double_c.number] = double_c
 """
 
-base_types=['int', 'Int', 'long', 'Long', 'double', 'Double']
-base_templates=[con_num_struct, int_c, long_c, double_c]
+string_c="""
+class string_c:
+    number = pack_number(0xb5286e24)
+
+    @staticmethod
+    def deserialize(io_bytes):
+        size = int.from_bytes(io_bytes.read(1), byteorder='little')
+        pfx_bytes = 1
+        if size == 254:
+            size = int.from_bytes(io_bytes.read(3), byteorder='little')
+            pfx_bytes = 4
+
+        result = io_bytes.read(size)
+
+        remainder = 4 - (pfx_bytes + size)%4
+        io_bytes.read(remainder)
+
+        return result.decode()
+combinators[string_c.number] = string_c
+"""
+
+base_types=['int', 'Int', 'long', 'Long', 'double', 'Double', 'string', 'String']
+base_templates=[con_num_struct, int_c, long_c, double_c, string_c]
 
 class Python34Target(Target):
     def __init__(self, schema, types, combinators):
