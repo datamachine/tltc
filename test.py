@@ -113,6 +113,9 @@ def test_bool():
     assert result.tag == 'boolFalse', '"{} == {}"'.format(result.tag, 'boolFalse')
     assert result.number == tl.boolFalse_c.number, '"{} == {}"'.format(result.number, tl.boolFalse_c.number)
 
+    print(tl.serialize(tl.boolTrue_c))
+    print(tl.serialize(tl.boolFalse_c))
+
 if __name__ == '__main__':
     test_int()
     test_long()

@@ -10,6 +10,10 @@ class {identifier}:
     _result = namedtuple('{result_type}', [{result_type_params}])
 
     @staticmethod
+    def serialize(params=None):
+        {serialize}
+
+    @staticmethod
     def deserialize(io_bytes):
         {deserialize}
 combinators[{identifier}.number] = {identifier}
@@ -85,7 +89,13 @@ class Python34Combinator:
             return "return {0}._result(tag='{1}', number={0}.number)".format(self._template_identifier(),
                                                                       self.ident.ir_ident.ident_full)
         else:
-            return 'pass'
+            return 'None'
+
+    def _template_serialize(self):
+        if not self.params:
+            return 'return {}.number'.format(self._template_identifier())
+        else:
+            return 'None'
 
     @property
     def result_type(self):
@@ -97,7 +107,8 @@ class Python34Combinator:
             number=self.number, 
             result_type_params=self._template_result_type_params(),
             result_type=self._template_result_type(),
-            deserialize=self._template_deserialize()
+            deserialize=self._template_deserialize(),
+            serialize=self._template_serialize()
             )
 
     def __str__(self):

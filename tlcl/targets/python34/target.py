@@ -11,13 +11,13 @@ import sys
 def_serialize='''
 def serialize(combinator, *args, **kwargs):
     c = None
-    if type(combinator) is int:
+    if type(combinator) is bytes:
         c = combinators.get(combinator)
     else:
         c = combinators.get(combinator.number)
     if c is None:
-        print('combinator "{}" does not exist'.format(combinator), file=sys.stderr)
-        return None
+        raise Exception('combinator "{}" does not exist'.format(combinator))
+
     return c.serialize(*args, **kwargs)
 '''
 
