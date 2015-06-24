@@ -11,8 +11,7 @@ class {identifier}:
 
     @staticmethod
     def deserialize(io_bytes):
-        result = bytearray()
-        return result        
+        {deserialize}
 combinators[{identifier}.number] = {identifier}
 """
 
@@ -70,6 +69,8 @@ class Python34Combinator:
 
     def _template_result_type_params(self):
         get_params = ["'{}'".format(p.py3ident) for p in self.params]
+        if not get_params:
+            get_params = ["'tag'"]
         return ', '.join(get_params)
 
     #def _template_result_type_params(self):
@@ -78,6 +79,13 @@ class Python34Combinator:
 
     def _template_result_type(self):
         return self.result_type.py3ident
+
+    def _template_deserialize(self):
+        if not self.params:
+            return "return {}._result(tag='{}')".format(self._template_identifier(),
+                                                self.ident.ir_ident.ident_full)
+        else:
+            return 'pass'
 
     @property
     def result_type(self):
@@ -88,7 +96,8 @@ class Python34Combinator:
             identifier=self._template_identifier(), 
             number=self.number, 
             result_type_params=self._template_result_type_params(),
-            result_type=self._template_result_type()
+            result_type=self._template_result_type(),
+            deserialize=self._template_deserialize()
             )
 
     def __str__(self):

@@ -6,7 +6,6 @@ import tl
 def test_int():
     val = int(1234)
 
-
     _bytes = bytearray(tl.int_c.number)
     _bytes += val.to_bytes(4, byteorder='little')
 
@@ -103,6 +102,15 @@ def test_vector():
 
     assert result == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
+def test_bool():
+    io_bytes = io.BytesIO(tl.boolTrue_c.number)
+    result = tl.deserialize(io_bytes)
+    assert result.tag == 'boolTrue'
+
+    io_bytes = io.BytesIO(tl.boolFalse_c.number)
+    result = tl.deserialize(io_bytes)
+    assert result.tag == 'boolFalse'
+
 if __name__ == '__main__':
     test_int()
     test_long()
@@ -110,3 +118,4 @@ if __name__ == '__main__':
     test_string()
     test_bytes()
     test_vector()
+    test_bool()

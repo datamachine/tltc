@@ -6,6 +6,8 @@ from .ident import Python34Identifier
 from ..targets import Target
 from collections import OrderedDict
 
+import sys
+
 def_serialize='''
 def serialize(combinator, *args, **kwargs):
     c = None
@@ -25,6 +27,10 @@ def deserialize(io_bytes, *args, **kwargs):
     if cons is None:
         print('combinator "{}" does not exist'.format(combinator), file=sys.stderr)
         return None
+
+    if not cons.is_base:
+        io_bytes.seek(-4, 1)
+    
     return cons.deserialize(io_bytes, *args, **kwargs)
 '''
 
