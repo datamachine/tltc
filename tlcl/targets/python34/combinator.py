@@ -68,10 +68,6 @@ class Python34Combinator:
         get_params = ['{} = {}.deserialize(io_bytes)'.format(p.py3ident, p.arg_type.py3ident) for p in self.params]
         return '\n        '.join(get_params)
 
-    def _template_set_params(self):
-        set_params = ['''setattr(result, '{0}', {0})'''.format(p.py3ident) for p in self.params]
-        return '\n        '.join(set_params)
-
     def _template_result_type_params(self):
         get_params = ["'{}'".format(p.py3ident) for p in self.params]
         if not get_params:
@@ -84,9 +80,6 @@ class Python34Combinator:
 
     def _template_result_type(self):
         return self.result_type.py3ident
-    
-    def _template_deserialize_params(self):
-        return 'None'
 
     def _template_deserialize_no_params(self):
         lines = [
@@ -103,11 +96,30 @@ class Python34Combinator:
         else:
             return self._template_deserialize_no_params()
 
-    def _template_serialize_params(self):
-        params =  []
+    def _template_deserialize_params(self):
+        lines =  []
         for param in self.params:
-            p = '{}'.format(param.py3ident)
-            params.append(p)
+            arg_type = param.arg_type
+            p = 'raise Exception()'
+            if arg_type.py3ident in ['Int', 'Long', 'Double', 'String', 'Bytes']:
+                p = '_{} = {}_c.deserialize(io_bytes)'.format(param.py3ident, arg_type.py3ident.lower())
+            else:
+                p = '_{} = deserialize(io_bytes)'.format(param.py3ident)
+
+            lines.append(p)
+
+        ret_stmt = 'return {}._result('.format(self._template_identifier())
+        padding = len(ret_stmt)
+        result_args = ['{0}=_{0}'.format(p.py3ident) for p in self.params]
+        result_args = [result_args[0]] + [r.rjust(padding + len(r) + 8) for r in result_args[1:]]
+        result_args = ',\n'.join(result_args)
+        ret_stmt = '{}{})'.format(ret_stmt, result_args)
+
+        lines.append(ret_stmt)
+
+        return '\n        '.join(lines)
+
+    def _template_serialize_params(self):
         return 'None'
 
     def _template_serialize_no_params(self):
